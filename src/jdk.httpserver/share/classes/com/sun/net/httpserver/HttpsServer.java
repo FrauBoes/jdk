@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,6 +87,45 @@ public abstract class HttpsServer extends HttpServer {
     ) throws IOException {
         HttpServerProvider provider = HttpServerProvider.provider();
         return provider.createHttpsServer (addr, backlog);
+    }
+
+    /**
+     * Creates a {@code HttpsServer} instance which will bind to the specified
+     * {@link java.net.InetSocketAddress} (IP address and port number).
+     * The server comes with a context mapping of the given root and handler,
+     * and any given filters are added to this context.
+     *
+     * A maximum backlog can also be specified. This is the maximum number of
+     * queued incoming connections to allow on the listening socket.
+     * Queued TCP connections exceeding this limit may be rejected by
+     * the TCP implementation. The HttpServer is acquired from the currently
+     * installed {@link HttpServerProvider}.
+     * The server must have a HttpsConfigurator established with
+     * {@link #setHttpsConfigurator(HttpsConfigurator)}.
+     *
+     * @param addr    the address to listen on, if {@code null} then
+     *                {@link #bind bind} must be called to set the address
+     * @param backlog the socket backlog. If this value is less than or
+     *                equal to zero, then a system default value is used.
+     * @param root    the root URI path of the context, must be absolute
+     * @param handler the HttpHandler for the context
+     * @param filters the Filters for the context, optional
+     * @return the HttpsServer
+     * @throws BindException if the server cannot bind to the requested address,
+     *                       or if the server is already bound.
+     * @throws IOException
+     */
+    public static HttpsServer create(InetSocketAddress addr,
+                                    int backlog,
+                                    String root,
+                                    HttpHandler handler,
+                                    Filter... filters) throws IOException {
+        HttpServerProvider provider = HttpServerProvider.provider();
+        HttpsServer server = provider.createHttpsServer(addr, backlog);
+        HttpContext context = server.createContext(root);
+        context.setHandler(handler);
+        Arrays.stream(filters).forEach(f -> context.getFilters().add(f));
+        return server;
     }
 
     /**
