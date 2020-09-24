@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 
 /**
  * This class provides a simple HTTP file server and its components.
@@ -56,11 +57,11 @@ public final class SimpleFileServer {
      * with a filter that logs information about the HttpExchange to System.out.
      *
      * @param port the port number
-     * @param root the root directory to be served, must be an absolute pathname
+     * @param root the root directory to be served, must be an absolute path
      * @return a HttpServer
      * @throws UncheckedIOException
      */
-    public static HttpServer createServer(int port, String root) {
+    public static HttpServer createServer(int port, Path root) {
         try {
             return HttpServer.create(new InetSocketAddress(port), 0, "/",
                     new FileServerHandler(root), new LogFilter(System.out));
@@ -73,10 +74,10 @@ public final class SimpleFileServer {
      * Creates a HttpHandler that displays the static content of the given
      * directory in HTML. Only HEAD and GET requests can be handled.
      *
-     * @param root the root directory to be served, must be an absolute pathname
+     * @param root the root directory to be served, must be an absolute path
      * @return a HttpHandler
      */
-    public static HttpHandler createFileHandler(String root) {
+    public static HttpHandler createFileHandler(Path root) {
         return new FileServerHandler(root);
     }
 

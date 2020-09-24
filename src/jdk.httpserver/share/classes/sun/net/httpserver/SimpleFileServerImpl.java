@@ -27,6 +27,7 @@ import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -43,7 +44,7 @@ import java.util.concurrent.Executors;
  * module.
  */
 final class SimpleFileServerImpl {
-    private static final String ROOT = ".";
+    private static final Path ROOT = Path.of(".");
     private static final int PORT = 8000;
 
     /**
@@ -53,14 +54,14 @@ final class SimpleFileServerImpl {
      */
     public static void main(String[] args) {
         int port = PORT;
-        String root = ROOT;
+        Path root = ROOT;
         Iterator<String> options = Arrays.asList(args).iterator();
         try {
             while (options.hasNext()) {
                 String option = options.next();
                 switch (option) {
                     case "-p" -> port = Integer.parseInt(options.next());
-                    case "-d" -> root = options.next();
+                    case "-d" -> root = Path.of(options.next());
                     default -> throw new AssertionError();
                 }
             }

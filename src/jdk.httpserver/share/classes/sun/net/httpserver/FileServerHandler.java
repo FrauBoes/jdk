@@ -44,10 +44,10 @@ import java.nio.file.Path;
  * can be served, other MIME types are supported on a best-guess basis.
  */
 public final class FileServerHandler implements HttpHandler {
-    private final String ROOT;
+    private final Path ROOT;
 
-    public FileServerHandler(String root) {
-        if (!Files.exists(Path.of(root))) {
+    public FileServerHandler(Path root) {
+        if (!Files.exists(root)) {
             throw new IllegalArgumentException("Path does not exist " + root);
         }
         ROOT = root;
@@ -61,7 +61,7 @@ public final class FileServerHandler implements HttpHandler {
         URI uri = t.getRequestURI();
         String file = uri.getPath();
 
-        var path = Path.of(ROOT, file);
+        var path = ROOT.resolve(file);
         if (!Files.exists(path)) {
             notFound(t, file);
             return;
