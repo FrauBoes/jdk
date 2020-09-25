@@ -24,7 +24,7 @@
 package com.sun.net.httpserver;
 
 import sun.net.httpserver.FileServerHandler;
-import sun.net.httpserver.LogFilter;
+import sun.net.httpserver.OutputFilter;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -49,6 +49,9 @@ import java.nio.file.Path;
  * main entry point of the jdk.httpserver module.
  */
 public final class SimpleFileServer {
+    public enum Output {
+        NONE, DEFAULT, VERBOSE;
+    }
 
     /**
      * Creates a HttpServer with a HttpHandler that displays the static content
@@ -61,10 +64,13 @@ public final class SimpleFileServer {
      * @return a HttpServer
      * @throws UncheckedIOException
      */
-    public static HttpServer createServer(int port, Path root) {
+    public static HttpServer createServer(int port, Path root, Output output) {
         try {
-            return HttpServer.create(new InetSocketAddress(port), 0, "/",
-                    new FileServerHandler(root), new LogFilter(System.out));
+            return output.equals(Output.NONE)  // don't add OutputFilter
+               ? HttpServer.create(new InetSocketAddress(port), 0, "/",
+                   new FileServerHandler(root))
+               : HttpServer.create(new InetSocketAddress(port), 0, "/",
+               new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE)));
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
@@ -86,9 +92,10 @@ public final class SimpleFileServer {
      * OutputStream.
      *
      * @param out the OutputStream to log to
+     * @param verbose if true, include headers in logging information
      * @return a Filter
      */
-    public static Filter createFilter(OutputStream out) {
-        return new LogFilter(out);
+    public static Filter createFilter(OutputStream out, boolean verbose) {
+        return new OutputFilter(out, verbose);
     }
 }

@@ -55,6 +55,8 @@ final class SimpleFileServerImpl {
     public static void main(String[] args) {
         int port = PORT;
         Path root = ROOT;
+        boolean verbose = false;
+        boolean silent = false;
         Iterator<String> options = Arrays.asList(args).iterator();
         try {
             while (options.hasNext()) {
@@ -62,17 +64,25 @@ final class SimpleFileServerImpl {
                 switch (option) {
                     case "-p" -> port = Integer.parseInt(options.next());
                     case "-d" -> root = Path.of(options.next());
+                    case "-v" -> verbose = true;
+                    case "-s" -> silent = true;
                     default -> throw new AssertionError();
                 }
             }
+            if (silent && verbose) {
+                throw new AssertionError();
+            }
         } catch (NoSuchElementException | AssertionError e) {
-            System.out.println("usage: java -m jdk.httpserver [-p port] [-d directory]");
+            System.out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-s | -v]");
             System.exit(1);
         }
 
         try {
-            var server = HttpServer.create(new InetSocketAddress(port), 0,"/",
-                    new FileServerHandler(root), new LogFilter(System.out));
+            var server = silent ? // don't add log filter
+                HttpServer.create(new InetSocketAddress(port), 0,"/",
+                    new FileServerHandler(root))
+               : HttpServer.create(new InetSocketAddress(port), 0,"/",
+               new FileServerHandler(root), new OutputFilter(System.out, verbose)) ;
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
             System.out.printf("Serving %s on port %d ...\n", root, port);
