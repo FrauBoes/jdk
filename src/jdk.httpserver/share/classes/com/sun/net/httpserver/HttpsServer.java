@@ -98,7 +98,7 @@ public abstract class HttpsServer extends HttpServer {
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
      * Queued TCP connections exceeding this limit may be rejected by
-     * the TCP implementation. The HttpServer is acquired from the currently
+     * the TCP implementation. The HttpsServer is acquired from the currently
      * installed {@link HttpServerProvider}.
      * The server must have a HttpsConfigurator established with
      * {@link #setHttpsConfigurator(HttpsConfigurator)}.

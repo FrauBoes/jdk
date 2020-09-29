@@ -34,20 +34,22 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Filter that provides basic logging output for a HttpExchange.
+ * Filter that provides output for a HttpExchange.
  * <p>
- * The non-verbose output format is based on the Common Log Format, see
- * https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format.
- * It includes the following information:
+ * If verbose is set to false, the format is based on the
+ * <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format>Common Logfile Format</a>.
+ * In this case the output includes the following information:
  * <p>
- * Common Logfile Format
  * remotehost rfc931 authuser [date] "request" status bytes
  * <p>
  * Example
  * 127.0.0.1 - jane [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326
  * <p>
- * The verbose output format additionally includes the request and response headers
- * of the HttpExchange.
+ * The fields rfc931, authuser and bytes are not captured in the implementation
+ * and are always represented as '-'.
+ * <p>
+ * If verbose is set to true, the output format additionally includes
+ * the request and response headers of the HttpExchange.
  */
 public final class OutputFilter extends Filter {
 	 private static final DateTimeFormatter formatter =

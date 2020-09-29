@@ -24,12 +24,14 @@
 package sun.net.httpserver;
 
 import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.SimpleFileServer.Output;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 
@@ -44,8 +46,9 @@ import java.util.concurrent.Executors;
  * module.
  */
 final class SimpleFileServerImpl {
-    private static final Path ROOT = Path.of(".");
+    private static final Path ROOT = Path.of("").toAbsolutePath();
     private static final int PORT = 8000;
+    private static final Output OUTPUT = Output.DEFAULT;
 
     /**
      * Starts a simple HTTP file server created on a directory.
@@ -55,8 +58,7 @@ final class SimpleFileServerImpl {
     public static void main(String[] args) {
         int port = PORT;
         Path root = ROOT;
-        boolean verbose = false;
-        boolean silent = false;
+        Output output = OUTPUT;
         Iterator<String> options = Arrays.asList(args).iterator();
         try {
             while (options.hasNext()) {
@@ -64,25 +66,21 @@ final class SimpleFileServerImpl {
                 switch (option) {
                     case "-p" -> port = Integer.parseInt(options.next());
                     case "-d" -> root = Path.of(options.next());
-                    case "-v" -> verbose = true;
-                    case "-s" -> silent = true;
+                    case "-o" -> output = Enum.valueOf(Output.class, options.next().toUpperCase(Locale.ROOT));
                     default -> throw new AssertionError();
                 }
             }
-            if (silent && verbose) {
-                throw new AssertionError();
-            }
-        } catch (NoSuchElementException | AssertionError e) {
-            System.out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-s | -v]");
+        } catch (NoSuchElementException | IllegalArgumentException | AssertionError e) {
+            System.out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]");
             System.exit(1);
         }
 
         try {
-            var server = silent ? // don't add log filter
-                HttpServer.create(new InetSocketAddress(port), 0,"/",
+            var server = output.equals(Output.NONE) ? // don't add OutputFilter
+                HttpServer.create(new InetSocketAddress(port), 0, root,
                     new FileServerHandler(root))
-               : HttpServer.create(new InetSocketAddress(port), 0,"/",
-               new FileServerHandler(root), new OutputFilter(System.out, verbose)) ;
+               : HttpServer.create(new InetSocketAddress(port), 0, root,
+               new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE))) ;
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
             System.out.printf("Serving %s on port %d ...\n", root, port);

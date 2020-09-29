@@ -50,26 +50,30 @@ import java.nio.file.Path;
  */
 public final class SimpleFileServer {
     public enum Output {
-        NONE, DEFAULT, VERBOSE;
+        NONE, DEFAULT, VERBOSE
     }
 
     /**
      * Creates a HttpServer with a HttpHandler that displays the static content
      * of the given directory in HTML.
-     * The server is bound to the wildcard address and the given port, and comes
-     * with a filter that logs information about the HttpExchange to System.out.
+     * The server is bound to the wildcard address and the given port. An optional
+     * {@link OutputFilter} can be specified via the {@link Output} argument.
+     * If output is {@code Output.NONE}, no OutputFilter is added. Otherwise
+     * an OutputFilter is added that prints information about the HttpExchange
+     * to System.out, with default or verbose output.
      *
      * @param port the port number
      * @param root the root directory to be served, must be an absolute path
+     * @param output the verbosity of the OutputFilter
      * @return a HttpServer
      * @throws UncheckedIOException
      */
     public static HttpServer createServer(int port, Path root, Output output) {
         try {
             return output.equals(Output.NONE)  // don't add OutputFilter
-               ? HttpServer.create(new InetSocketAddress(port), 0, "/",
+               ? HttpServer.create(new InetSocketAddress(port), 0, root,
                    new FileServerHandler(root))
-               : HttpServer.create(new InetSocketAddress(port), 0, "/",
+               : HttpServer.create(new InetSocketAddress(port), 0, root,
                new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE)));
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
