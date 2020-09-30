@@ -667,14 +667,16 @@ class ServerImpl implements TimeSource {
             } catch (IOException e1) {
                 logger.log (Level.TRACE, "ServerImpl.Exchange (1)", e1);
                 closeConnection(connection);
-            } catch (NumberFormatException e3) {
+            } catch (NumberFormatException e2) {
+                logger.log (Level.TRACE, "ServerImpl.Exchange (2)", e2);
                 reject (Code.HTTP_BAD_REQUEST,
                         requestLine, "NumberFormatException thrown");
-            } catch (URISyntaxException e) {
+            } catch (URISyntaxException e3) {
+                logger.log (Level.TRACE, "ServerImpl.Exchange (3)", e3);
                 reject (Code.HTTP_BAD_REQUEST,
                         requestLine, "URISyntaxException thrown");
             } catch (Exception e4) {
-                logger.log (Level.TRACE, "ServerImpl.Exchange (2)", e4);
+                logger.log (Level.TRACE, "ServerImpl.Exchange (4)", e4);
                 closeConnection(connection);
             }
         }
