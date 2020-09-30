@@ -34,9 +34,9 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Filter that provides output for a HttpExchange.
+ * A Filter that provides output for a HttpExchange.
  * <p>
- * If verbose is set to false, the format is based on the
+ * If verbose is false, the format is based on the
  * <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format>Common Logfile Format</a>.
  * In this case the output includes the following information:
  * <p>
@@ -48,8 +48,8 @@ import java.time.format.DateTimeFormatter;
  * The fields rfc931, authuser and bytes are not captured in the implementation
  * and are always represented as '-'.
  * <p>
- * If verbose is set to true, the output format additionally includes
- * the request and response headers of the HttpExchange.
+ * If verbose is true, the output format additionally includes the request and
+ * response headers of the HttpExchange.
  */
 public final class OutputFilter extends Filter {
 	 private static final DateTimeFormatter formatter =

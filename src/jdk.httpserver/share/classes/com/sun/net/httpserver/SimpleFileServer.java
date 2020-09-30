@@ -33,20 +33,23 @@ import java.net.InetSocketAddress;
 import java.nio.file.Path;
 
 /**
- * This class provides a simple HTTP file server and its components.
+ * A class that provides a simple HTTP file server and its components.
  * <p>
- * The simple file server is composed of a HttpServer that is bound to the
- * wildcard address and the given port, a HttpHandler that displays the static
- * content of the given directory in HTML, and a Filter that provides basic
- * logging of the HttpExchange.
+ * The simple file server is composed of <ul>
+ *     <li>a {@link HttpServer HttpServer} that is bound to the wildcard
+ *     address and the given port,</li>
+ *     <li>a {@link HttpHandler HttpHandler} that displays the static content of
+ *     the given directory in HTML,</li>
+ *     <li>a {@link Filter Filter} that outputs information about the
+ *     {@link HttpExchange HttpExchange}.</li></ul>
  * <p>
  * Each component can be retrieved for reuse and extension via the static
- * methods provided. In the case of the HttpHandler, the provided instance can
- * be wrapped by a custom HttpHandler to handle request methods other than HEAD
- * and GET.
+ * methods provided. In the case of the {@code HttpHandler}, the provided instance
+ * can be wrapped by a custom {@code HttpHandler} to handle request methods other
+ * than HEAD and GET.
  * <p>
  * A default implementation of the simple HTTP file server is provided via the
- * main entry point of the jdk.httpserver module.
+ * main entry point of the {@code jdk.httpserver} module.
  */
 public final class SimpleFileServer {
     public enum Output {
@@ -54,13 +57,15 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a HttpServer with a HttpHandler that displays the static content
-     * of the given directory in HTML.
+     * Creates a {@code HttpServer} with a {@code HttpHandler} that displays
+     * the static content of the given directory in HTML.
+     * <p>
      * The server is bound to the wildcard address and the given port. An optional
-     * {@link OutputFilter} can be specified via the {@link Output} argument.
-     * If output is {@code Output.NONE}, no OutputFilter is added. Otherwise
-     * an OutputFilter is added that prints information about the HttpExchange
-     * to System.out, with default or verbose output.
+     * {@code Filter} can be specified via the {@code output} argument. If
+     * {@link Output#NONE Output.NONE} is passed, no {@code Filter} is added.
+     * Otherwise a {@code Filter} is added that prints information about the
+     * {@code HttpExchange} to {@code System.out}, with either
+     * {@linkplain Output#NONE default} or {@linkplain Output#VERBOSE verbose} output.
      *
      * @param port the port number
      * @param root the root directory to be served, must be an absolute path
@@ -70,7 +75,7 @@ public final class SimpleFileServer {
      */
     public static HttpServer createServer(int port, Path root, Output output) {
         try {
-            return output.equals(Output.NONE)  // don't add OutputFilter
+            return output.equals(Output.NONE)
                ? HttpServer.create(new InetSocketAddress(port), 0, root,
                    new FileServerHandler(root))
                : HttpServer.create(new InetSocketAddress(port), 0, root,
@@ -81,7 +86,7 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a HttpHandler that displays the static content of the given
+     * Creates a {@code HttpHandler} that displays the static content of the given
      * directory in HTML. Only HEAD and GET requests can be handled.
      *
      * @param root the root directory to be served, must be an absolute path
@@ -92,14 +97,14 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a Filter that logs information about a HttpExchange to the given
-     * OutputStream.
+     * Creates a {@code Filter} that prints information about the {@code HttpExchange}
+     * to the given {@code OutputStream}.
      *
-     * @param out the OutputStream to log to
-     * @param verbose if true, include headers in logging information
+     * @param out the OutputStream to print to
+     * @param verbose if true, include request and response headers in the output.
      * @return a Filter
      */
-    public static Filter createFilter(OutputStream out, boolean verbose) {
+    public static Filter createOutputFilter(OutputStream out, boolean verbose) {
         return new OutputFilter(out, verbose);
     }
 }

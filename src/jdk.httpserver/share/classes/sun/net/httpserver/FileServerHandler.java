@@ -37,9 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * Basic HTTP file server handler for static content
+ * A basic HTTP file server handler for static content.
  * <p>
- * Must be given an absolute pathname to the root directory to be served.
+ * Must be given an absolute pathname to the directory to be served.
  * Can only handle HEAD and GET requests. Directory listings, html and text files
  * can be served, other MIME types are supported on a best-guess basis.
  */

@@ -104,7 +104,7 @@ public abstract class HttpServer {
     }
 
     /**
-     * creates a HttpServer instance which is initially not bound to any local address/port.
+     * Creates a HttpServer instance which is initially not bound to any local address/port.
      * The HttpServer is acquired from the currently installed {@link HttpServerProvider}
      * The server must be bound using {@link #bind(InetSocketAddress,int)} before it can be used.
      * @throws IOException
@@ -114,8 +114,8 @@ public abstract class HttpServer {
     }
 
     /**
-     * Create a <code>HttpServer</code> instance which will bind to the
-     * specified {@link java.net.InetSocketAddress} (IP address and port number)
+     * Creates a <code>HttpServer</code> instance which will bind to the
+     * specified {@link java.net.InetSocketAddress} (IP address and port number).
      *
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
@@ -141,9 +141,11 @@ public abstract class HttpServer {
     /**
      * Creates a {@code HttpServer} instance which will bind to the specified
      * {@link java.net.InetSocketAddress} (IP address and port number).
-     * The server comes with a context mapping of the given root and handler.
-     * Any given filters are added to this context.
-     *
+     * <p>
+     * The server comes with a {@code HttpContext} mapping of the given
+     * {@code Path} and {@code HttpHandler}. Any given {@code Filters} are added
+     * to this context.
+     * <p>
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
      * Queued TCP connections exceeding this limit may be rejected by

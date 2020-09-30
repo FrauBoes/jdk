@@ -28,6 +28,7 @@ package com.sun.net.httpserver;
 import java.net.*;
 import java.io.*;
 import java.nio.*;
+import java.nio.file.Path;
 import java.security.*;
 import java.nio.channels.*;
 import java.util.*;
@@ -92,14 +93,17 @@ public abstract class HttpsServer extends HttpServer {
     /**
      * Creates a {@code HttpsServer} instance which will bind to the specified
      * {@link java.net.InetSocketAddress} (IP address and port number).
-     * The server comes with a context mapping of the given root and handler,
-     * and any given filters are added to this context.
-     *
+     * <p>
+     * The server comes with a {@code HttpContext} mapping of the given
+     * {@code Path} and {@code HttpHandler}. Any given {@code Filters} are added
+     * to this context.
+     * <p>
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
      * Queued TCP connections exceeding this limit may be rejected by
      * the TCP implementation. The HttpsServer is acquired from the currently
      * installed {@link HttpServerProvider}.
+     * <p>
      * The server must have a HttpsConfigurator established with
      * {@link #setHttpsConfigurator(HttpsConfigurator)}.
      *
@@ -117,12 +121,12 @@ public abstract class HttpsServer extends HttpServer {
      */
     public static HttpsServer create(InetSocketAddress addr,
                                     int backlog,
-                                    String root,
+                                    Path root,
                                     HttpHandler handler,
                                     Filter... filters) throws IOException {
         HttpServerProvider provider = HttpServerProvider.provider();
         HttpsServer server = provider.createHttpsServer(addr, backlog);
-        HttpContext context = server.createContext(root);
+        HttpContext context = server.createContext(root.toString());
         context.setHandler(handler);
         Arrays.stream(filters).forEach(f -> context.getFilters().add(f));
         return server;

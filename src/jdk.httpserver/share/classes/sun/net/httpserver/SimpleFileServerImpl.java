@@ -35,12 +35,16 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 
+import static java.lang.System.out;
+
 /**
- * This class provides a simple HTTP file server created on a directory.
+ * A class that provides a simple HTTP file server to serve the content of
+ * a given directory.
  * <p>
  * It is composed of a HttpHandler that displays the static content of the given
- * directory in HTML, a HttpServer that serves the content on the wildcard
- * address and the given port, and a filter that logs to System.out.
+ * directory in HTML, a HttpServer that serves the content of the wildcard address
+ * and the given port, and an optional OutputFilter that prints information about
+ * the HttpExchange to System.out.
  * <p>
  * The implementation is provided via the main entry point of the jdk.httpserver
  * module.
@@ -71,21 +75,21 @@ final class SimpleFileServerImpl {
                 }
             }
         } catch (NoSuchElementException | IllegalArgumentException | AssertionError e) {
-            System.out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]");
+            out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]");
             System.exit(1);
         }
 
         try {
-            var server = output.equals(Output.NONE) ? // don't add OutputFilter
-                HttpServer.create(new InetSocketAddress(port), 0, root,
+            var server = output.equals(Output.NONE)
+               ? HttpServer.create(new InetSocketAddress(port), 0, root,
                     new FileServerHandler(root))
                : HttpServer.create(new InetSocketAddress(port), 0, root,
                new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE))) ;
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
-            System.out.printf("Serving %s on port %d ...\n", root, port);
+            out.printf("Serving %s on port %d ...\n", root, port);
         } catch (IOException ioe) {
-            System.out.println("Connection failed: " + ioe.getMessage());
+            out.println("Connection failed: " + ioe.getMessage());
         }
     }
 }
