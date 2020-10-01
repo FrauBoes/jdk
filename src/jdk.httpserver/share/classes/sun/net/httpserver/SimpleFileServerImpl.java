@@ -23,11 +23,10 @@
 
 package sun.net.httpserver;
 
-import com.sun.net.httpserver.HttpServer;
-import com.sun.net.httpserver.SimpleFileServer.Output;
+import com.sun.net.httpserver.SimpleFileServer;
+import com.sun.net.httpserver.SimpleFileServer.OutputLevel;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -52,7 +51,7 @@ import static java.lang.System.out;
 final class SimpleFileServerImpl {
     private static final Path ROOT = Path.of("").toAbsolutePath();
     private static final int PORT = 8000;
-    private static final Output OUTPUT = Output.DEFAULT;
+    private static final OutputLevel OUTPUT_LEVEL = OutputLevel.DEFAULT;
 
     /**
      * Starts a simple HTTP file server created on a directory.
@@ -62,7 +61,7 @@ final class SimpleFileServerImpl {
     public static void main(String[] args) {
         int port = PORT;
         Path root = ROOT;
-        Output output = OUTPUT;
+        OutputLevel outputLevel = OUTPUT_LEVEL;
         Iterator<String> options = Arrays.asList(args).iterator();
         try {
             while (options.hasNext()) {
@@ -70,7 +69,7 @@ final class SimpleFileServerImpl {
                 switch (option) {
                     case "-p" -> port = Integer.parseInt(options.next());
                     case "-d" -> root = Path.of(options.next());
-                    case "-o" -> output = Enum.valueOf(Output.class, options.next().toUpperCase(Locale.ROOT));
+                    case "-o" -> outputLevel = Enum.valueOf(OutputLevel.class, options.next().toUpperCase(Locale.ROOT));
                     default -> throw new AssertionError();
                 }
             }
@@ -80,16 +79,12 @@ final class SimpleFileServerImpl {
         }
 
         try {
-            var server = output.equals(Output.NONE)
-               ? HttpServer.create(new InetSocketAddress(port), 0, root,
-                    new FileServerHandler(root))
-               : HttpServer.create(new InetSocketAddress(port), 0, root,
-               new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE))) ;
+            var server = SimpleFileServer.createFileServer(port, root, outputLevel);
             server.setExecutor(Executors.newCachedThreadPool());
             server.start();
             out.printf("Serving %s on port %d ...\n", root, port);
-        } catch (IOException ioe) {
-            out.println("Connection failed: " + ioe.getMessage());
+        } catch (UncheckedIOException e) {
+            out.println("Connection failed: " + e.getMessage());
         }
     }
 }

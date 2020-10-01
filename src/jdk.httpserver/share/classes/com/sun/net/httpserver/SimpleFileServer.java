@@ -37,57 +37,103 @@ import java.nio.file.Path;
  * <p>
  * The simple file server is composed of <ul>
  *     <li>a {@link HttpServer HttpServer} that is bound to the wildcard
- *     address and the given port,</li>
+ *     address and a given port,</li>
  *     <li>a {@link HttpHandler HttpHandler} that displays the static content of
- *     the given directory in HTML,</li>
- *     <li>a {@link Filter Filter} that outputs information about the
- *     {@link HttpExchange HttpExchange}.</li></ul>
+ *     a given directory in HTML,</li>
+ *     <li>an optional {@link Filter Filter} that outputs information about a
+ *     {@link HttpExchange HttpExchange}. The output format is specified by a
+ *     {@link OutputLevel OutputLevel}.</li></ul>
  * <p>
  * Each component can be retrieved for reuse and extension via the static
  * methods provided. In the case of the {@code HttpHandler}, the provided instance
  * can be wrapped by a custom {@code HttpHandler} to handle request methods other
  * than HEAD and GET.
+ * (EXAMPLES)
  * <p>
  * A default implementation of the simple HTTP file server is provided via the
  * main entry point of the {@code jdk.httpserver} module.
  */
 public final class SimpleFileServer {
-    public enum Output {
-        NONE, DEFAULT, VERBOSE
+
+    private SimpleFileServer() { }
+
+    /**
+     * Describes the output about a {@code HttpExchange}.
+     */
+    public enum OutputLevel {
+        /**
+         * Used to specify no output.
+         */
+        NONE,
+        /**
+         * Used to specify output in the default format.
+         * <p>
+         * The default format is based on the <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format'>Common Logfile Format</a>.
+         * and includes the following information:
+         * <p>
+         * {@code remotehost rfc931 authuser [date] "request" status bytes}
+         * <p>
+         * Example:
+         * <p>
+         * {@code 127.0.0.1 - - [22/Jun/2000:13:55:36 -0700] "GET /example.txt HTTP/1.0" 200 -}
+         * <p>
+         * Note: The fields {@code rfc931}, {@code authuser} and {@code bytes}
+         * are not captured in the implementation and are always represented as
+         * {@code '-'}.
+         */
+        DEFAULT,
+        /**
+         * Used to specify output in the verbose format.
+         * <p>
+         * Additional to the information provided by the
+         * {@linkplain OutputLevel#DEFAULT default} format, the verbose format
+         * includes the request and response headers of the {@code HttpExchange}.
+         */
+        VERBOSE
     }
 
     /**
      * Creates a {@code HttpServer} with a {@code HttpHandler} that displays
      * the static content of the given directory in HTML.
      * <p>
-     * The server is bound to the wildcard address and the given port. An optional
-     * {@code Filter} can be specified via the {@code output} argument. If
-     * {@link Output#NONE Output.NONE} is passed, no {@code Filter} is added.
-     * Otherwise a {@code Filter} is added that prints information about the
-     * {@code HttpExchange} to {@code System.out}, with either
-     * {@linkplain Output#NONE default} or {@linkplain Output#VERBOSE verbose} output.
+     * The server is bound to the wildcard address and the given port. The handler
+     * is mapped to the URI path "/" via a {@code HttpContext}. It only supports
+     * HEAD and GET requests and serves directory listings, html and text files.
+     * Other MIME types are supported on a best-guess basis.
+     * <p>
+     * An optional {@code Filter} that prints information about the
+     * {@code HttpExchange} to {@code System.out} can be specified via the
+     * {@linkplain OutputLevel outputLevel} argument. If
+     * {@link OutputLevel#NONE OutputLevel.NONE} is passed, no {@code Filter} is
+     * added. Otherwise a {@code Filter} is added with either
+     * {@linkplain OutputLevel#DEFAULT default} or
+     * {@linkplain OutputLevel#VERBOSE verbose} output format.
      *
      * @param port the port number
      * @param root the root directory to be served, must be an absolute path
-     * @param output the verbosity of the OutputFilter
+     * @param outputLevel the output about a http exchange
      * @return a HttpServer
      * @throws UncheckedIOException
      */
-    public static HttpServer createServer(int port, Path root, Output output) {
+    public static HttpServer createFileServer(int port, Path root, OutputLevel outputLevel) {
         try {
-            return output.equals(Output.NONE)
-               ? HttpServer.create(new InetSocketAddress(port), 0, root,
-                   new FileServerHandler(root))
-               : HttpServer.create(new InetSocketAddress(port), 0, root,
-               new FileServerHandler(root), new OutputFilter(System.out, output.equals(Output.VERBOSE)));
+            return outputLevel.equals(OutputLevel.NONE)
+               ? HttpServer.create(new InetSocketAddress(port), 0, "/",
+               new FileServerHandler(root))
+               : HttpServer.create(new InetSocketAddress(port), 0, "/",
+               new FileServerHandler(root), new OutputFilter(System.out, outputLevel));
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
     }
 
     /**
-     * Creates a {@code HttpHandler} that displays the static content of the given
-     * directory in HTML. Only HEAD and GET requests can be handled.
+     * Creates a {@code HttpHandler} that displays the static content of the
+     * given directory in HTML.
+     * <p>
+     * The handler supports only HEAD and GET requests and can serve directory
+     * listings, html and text files. Other MIME types are supported on a
+     * best-guess basis.
      *
      * @param root the root directory to be served, must be an absolute path
      * @return a HttpHandler
@@ -97,14 +143,21 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code Filter} that prints information about the {@code HttpExchange}
+     * Creates a {@code Filter} that prints output about a {@code HttpExchange}
      * to the given {@code OutputStream}.
+     * <p>
+     * The output format is specified by the {@link OutputLevel outputLevel}.
      *
+     * @implNote It is not possible to create a Filter with
+     *           {@link OutputLevel#NONE OutputLevel.NONE}. Instead it is
+     *           recommended to not use a filter in this case.
      * @param out the OutputStream to print to
-     * @param verbose if true, include request and response headers in the output.
+     * @param outputLevel the output about a http exchange. If
+     *                    {@code OutputLevel.NONE} is passed, an
+     *                    {@code IllegalArgumentException} is thrown
      * @return a Filter
      */
-    public static Filter createOutputFilter(OutputStream out, boolean verbose) {
-        return new OutputFilter(out, verbose);
+    public static Filter createOutputFilter(OutputStream out, OutputLevel outputLevel) {
+        return new OutputFilter(out, outputLevel);
     }
 }

@@ -40,7 +40,7 @@ import java.nio.file.Path;
  * A basic HTTP file server handler for static content.
  * <p>
  * Must be given an absolute pathname to the directory to be served.
- * Can only handle HEAD and GET requests. Directory listings, html and text files
+ * Supports only HEAD and GET requests. Directory listings, html and text files
  * can be served, other MIME types are supported on a best-guess basis.
  */
 public final class FileServerHandler implements HttpHandler {
@@ -48,54 +48,68 @@ public final class FileServerHandler implements HttpHandler {
 
     public FileServerHandler(Path root) {
         if (!Files.exists(root)) {
-            throw new IllegalArgumentException("Path does not exist " + root);
+            throw new IllegalArgumentException("Path does not exist: " + root);
+        }
+        if (!Files.isDirectory(root)) {
+            throw new IllegalArgumentException("Path not a directory: " + root);
         }
         ROOT = root;
     }
 
     public void handle(HttpExchange t) throws IOException {
-        try (InputStream is = t.getRequestBody()) {
-            is.readAllBytes();
-        }
-        Headers respHeaders = t.getResponseHeaders();
-        URI uri = t.getRequestURI();
-        String file = uri.getPath();
+        try {
+            try (InputStream is = t.getRequestBody()) {
+                is.readAllBytes();
+            }
 
-        var path = ROOT.resolve(file);
-        if (!Files.exists(path)) {
-            notFound(t, file);
-            return;
-        }
-
-        String method = t.getRequestMethod();
-        if (method.equals("HEAD")) {
-            respHeaders.set("Content-Length", Long.toString(Files.size(path)));
-            t.sendResponseHeaders(200, -1);
-            t.close();
-        } else if (!method.equals("GET")) {
-            t.sendResponseHeaders(405, -1);
-            t.close();
-            return;
-        }
-
-        // best-guess MIME type
-        String type = getMediaType(file);
-        respHeaders.set("Content-Type", type);
-
-        if (Files.isDirectory(path)) {
-            if (!file.endsWith("/")) {
-                redirect(t);
+            Headers respHeaders = t.getResponseHeaders();
+            URI uri = t.getRequestURI();
+            String contextPath = t.getHttpContext().getPath();
+            if (! contextPath.endsWith("/")) {
+                contextPath += "/";
+            }
+            String file = URI.create(contextPath).relativize(uri).getPath();
+            if (file.isEmpty())
+                file = "./";
+            Path path = ROOT.resolve(file);
+            if (!Files.exists(path)) {
+                notFound(t, file);
                 return;
             }
-            respHeaders.set("Content-Type", "text/html");
-            Path index = getIndex(path);
-            if (index != null) {
-                serveFile(t, index);
-            } else {
-                listFiles(t, path, file);
+
+            String method = t.getRequestMethod();
+            if (method.equals("HEAD")) {
+                respHeaders.set("Content-Length", Long.toString(Files.size(path)));
+                t.sendResponseHeaders(200, -1);
+                t.close();
+            } else if (!method.equals("GET")) {
+                t.sendResponseHeaders(405, -1);
+                t.close();
+                return;
             }
-        } else {
-            serveFile(t, path);
+
+            // best-guess MIME type
+            String type = getMediaType(file);
+            respHeaders.set("Content-Type", type);
+
+            if (Files.isDirectory(path)) {
+                if (!file.endsWith("/")) {
+                    redirect(t);
+                    return;
+                }
+                respHeaders.set("Content-Type", "text/html");
+                Path index = getIndex(path);
+                if (index != null) {
+                    serveFile(t, index);
+                } else {
+                    listFiles(t, path, file);
+                }
+            } else {
+                serveFile(t, path);
+            }
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+            throw throwable;
         }
     }
 
@@ -122,20 +136,6 @@ public final class FileServerHandler implements HttpHandler {
         return type != null ? type : "text/html";
     }
 
-    private static String sanitize(String file) {
-        var sb = new StringBuilder();
-        file.chars().forEach(c -> sb.append(switch (c) {
-            case (int) '&' -> "&amp;";
-            case (int) '<' -> "&lt;";
-            case (int) '>' -> "&gt;";
-            case (int) '"' -> "&quot;";
-            case (int) '\'' -> "&#x27;";
-            case (int) '/' -> "&#x2F;";
-            default -> Character.toString(c);
-        }));
-        return sb.toString();
-    }
-
     private void listFiles(HttpExchange t, Path path, String file)
             throws IOException {
         t.sendResponseHeaders(200, 0);
@@ -154,6 +154,20 @@ public final class FileServerHandler implements HttpHandler {
             ps.println("</html>");
             ps.flush();
         }
+    }
+
+    private static String sanitize(String file) {
+        var sb = new StringBuilder();
+        file.chars().forEach(c -> sb.append(switch (c) {
+            case (int) '&' -> "&amp;";
+            case (int) '<' -> "&lt;";
+            case (int) '>' -> "&gt;";
+            case (int) '"' -> "&quot;";
+            case (int) '\'' -> "&#x27;";
+            case (int) '/' -> "&#x2F;";
+            default -> Character.toString(c);
+        }));
+        return sb.toString();
     }
 
     private void redirect(HttpExchange t) throws IOException {

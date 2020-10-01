@@ -142,9 +142,9 @@ public abstract class HttpServer {
      * Creates a {@code HttpServer} instance which will bind to the specified
      * {@link java.net.InetSocketAddress} (IP address and port number).
      * <p>
-     * The server comes with a {@code HttpContext} mapping of the given
-     * {@code Path} and {@code HttpHandler}. Any given {@code Filters} are added
-     * to this context.
+     * The server comes with a {@code HttpContext} mapping of the given URI path
+     * {@code root} and the given {@code HttpHandler}. Any given {@code Filters}
+     * are added to this context.
      * <p>
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
@@ -155,23 +155,22 @@ public abstract class HttpServer {
      * @param addr    the address to listen on, if {@code null} then
      *                {@link #bind bind} must be called to set the address
      * @param backlog the socket backlog. If this value is less than or
-     *                equal to zero, then a system default value is used.
+     *                equal to zero, then a system default value is used
      * @param root    the root URI path of the context, must be absolute
      * @param handler the HttpHandler for the context
      * @param filters the Filters for the context, optional
      * @return the HttpServer
      * @throws BindException if the server cannot bind to the requested address,
-     *                       or if the server is already bound.
+     *                       or if the server is already bound
      * @throws IOException
      */
     public static HttpServer create(InetSocketAddress addr,
                                     int backlog,
-                                    Path root,
+                                    String root,
                                     HttpHandler handler,
                                     Filter... filters) throws IOException {
-        HttpServerProvider provider = HttpServerProvider.provider();
-        HttpServer server = provider.createHttpServer(addr, backlog);
-        HttpContext context = server.createContext(root.toString());
+        HttpServer server = HttpServer.create(addr, backlog);
+        HttpContext context = server.createContext(root);
         context.setHandler(handler);
         Arrays.stream(filters).forEach(f -> context.getFilters().add(f));
         return server;

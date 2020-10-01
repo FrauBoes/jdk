@@ -26,6 +26,24 @@
 /**
  * Defines the JDK-specific HTTP server API.
  *
+ * A basic high-level server API for building embedded HTTP servers.
+ * The main components are
+ * <ul>
+ * <li>the {@link com.sun.net.httpserver.HttpExchange} class that describes a
+ * request and response pair,</li>
+ * <li>the {@link com.sun.net.httpserver.HttpHandler} interface to handle
+ * incoming requests,</li>
+ * <li>the {@link com.sun.net.httpserver.HttpServer} class to listen for
+ * connections and dispatch requests to the handlers,</li>
+ * <li>the {@link com.sun.net.httpserver.HttpContext} class that maps a URI path
+ * to a {@code HttpHandler},</li>
+ * <li>the {@link com.sun.net.httpserver.Filter} class that allows pre- and post-
+ * processing of requests.</li>
+ *
+ * Additionally, {@link com.sun.net.httpserver.SimpleFileServer} offers a
+ * out-of-the-box simple HTTP file server. A default implementation is provided
+ * via the main entry point of this module.
+ *
  * @uses com.sun.net.httpserver.spi.HttpServerProvider
  *
  * @moduleGraph
