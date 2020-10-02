@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,6 +120,10 @@
         }
     });
    </pre></blockquote>
+ 	<p>
+ 	The {@link com.sun.net.httpserver.SimpleFileServer} class offers a simple
+   out-of-the-box file server. A default implementation is provided via the main
+   entry point of the {@code jdk.httpserver} module.
 
    @since 1.6
  */
