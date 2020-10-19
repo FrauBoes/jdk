@@ -30,10 +30,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.net.URLConnection;
 import java.nio.file.Path;
 
 /**
- * A class that provides a simple HTTP file server and its components.
+ * A class that provides a simple HTTP file server and its components for
+ * educational purposes.
  * <p>
  * The simple file server is composed of <ul>
  * <li>a {@link HttpServer HttpServer} that is bound to the wildcard
@@ -52,18 +54,19 @@ import java.nio.file.Path;
  * It comes with a handler that displays the static content of the given
  * directory in HTML, and an optional filter that prints output about the
  * {@code HttpExchange} to {@code System.out}.
- * <p>Example simple file server
+ * <p>Example of a simple file server:
  * <pre>    {@code var server = SimpleFileServer.createFileServer(8080, Path.of("/some/path"), OutputLevel.DEFAULT);
  *    server.start();}</pre>
  * <p><b>File handler</b><p>
- * {@link #createFileServerHandler(Path)} returns a {@code HttpHandler} that
- * displays the static content of the given directory in HTML. The handler
- * supports only HEAD and GET requests and can serve directory listings, html
- * and text files. To handle request methods other than HEAD and GET, the handler
- * instance can be complemented by the server's other handlers, or it can be
- * wrapped by a custom {@code HttpHandler}.
- * <p>Example complemented file handler
- * <pre>    {@code HttpHandler handler = SimpleFileServer.createFileServerHandler(Path.of("/some/path/"));
+ * {@link #createFileHandler(Path)} returns a {@code HttpHandler} that
+ * displays the static content of the given directory in HTML. The handler can
+ * serve directory listings and files, the content type of a file is determined
+ * on a {@linkplain #createFileHandler(Path) best-guess}. The handler
+ * supports only HEAD and GET requests; to handle request methods other than
+ * HEAD and GET, the handler instance can be complemented by the server's other
+ * handlers, or it can be wrapped by a custom {@code HttpHandler}.
+ * <p>Example complemented file handler:
+ * <pre>    {@code var handler = SimpleFileServer.createFileHandler(Path.of("/some/path/"));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/browse/", handler);
  *    server.createContext("/echo/", new PostHandler());
  *    server.start();
@@ -74,12 +77,12 @@ import java.nio.file.Path;
  *             // echo request body
  *        }
  *    }}</pre>
- * <p>Example wrapped file handler
+ * <p>Example of a wrapped file handler
  * <pre>    {@code var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", new WrappedHandler());
  *    server.start();
  *    ...
  *    class WrappedHandler implements HttpHandler {
- *        private static final HttpHandler fileServerHandler = SimpleFileServer.createFileServerHandler(Path.of("/some/path/"));
+ *        private static final HttpHandler fileServerHandler = SimpleFileServer.createFileHandler(Path.of("/some/path/"));
  *
  *        @Override
  *        public void handle(HttpExchange t) throws IOException {
@@ -97,13 +100,16 @@ import java.nio.file.Path;
  * that prints output about a {@code HttpExchange} to the given
  * {@code OutputStream}. The output format is specified by the
  * {@link OutputLevel outputLevel}.
- * <p>Example output filter
- * <pre>    {@code Filter filter = SimpleFileServer.createOutputFilter(System.out, OutputLevel.VERBOSE);
- *    HttpServer server = HttpServer.create(new InetSocketAddress(8080), 10, "/echo/", new PostHandler(), filter);
+ * <p>Example of a output filter:
+ * <pre>    {@code var filter = SimpleFileServer.createOutputFilter(System.out, OutputLevel.VERBOSE);
+ *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/echo/", new PostHandler(), filter);
  *    server.start();}</pre>
  * <p>
  * A default implementation of the simple HTTP file server is provided via the
- * main entry point of the {@code jdk.httpserver} module.
+ * main entry point of the {@code jdk.httpserver} module, which can be used on
+ * the command line as such:
+ * <p>
+ * {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}
  */
 public final class SimpleFileServer {
 
@@ -111,7 +117,7 @@ public final class SimpleFileServer {
 	 }
 
 	 /**
-	  * Describes the output about a {@code HttpExchange}.
+	  * Describes the output produced by a {@code HttpExchange}.
 	  */
 	 public enum OutputLevel {
 		  /**
@@ -185,13 +191,16 @@ public final class SimpleFileServer {
 	  * given directory in HTML.
 	  * <p>
 	  * The handler supports only HEAD and GET requests and can serve directory
-	  * listings, html and text files. Other MIME types are supported on a
-	  * best-guess basis.
+	  * listings and files. Content types are supported on a best-guess basis.
+	  *
+	  * @implNote The content type of a file is guessed by calling
+	  *           {@link java.net.FileNameMap#getContentTypeFor(String)} on the
+	  *           {@link URLConnection#getFileNameMap() mimetable} found.
 	  *
 	  * @param root the root directory to be served, must be an absolute path
 	  * @return a HttpHandler
 	  */
-	 public static HttpHandler createFileServerHandler (Path root) {
+	 public static HttpHandler createFileHandler (Path root) {
 		  return new FileServerHandler(root);
 	 }
 
@@ -201,14 +210,13 @@ public final class SimpleFileServer {
 	  * <p>
 	  * The output format is specified by the {@link OutputLevel outputLevel}.
 	  *
-	  * @param out         the OutputStream to print to
-	  * @param outputLevel the output about a http exchange. If
-	  *                    {@code OutputLevel.NONE} is passed, an
-	  *                    {@code IllegalArgumentException} is thrown
-	  * @return a Filter
-	  * @implNote It is not possible to create a Filter with
-	  * 			  {@link OutputLevel#NONE OutputLevel.NONE}. Instead it is
+	  * @implNote An {@link IllegalArgumentException} is thrown if
+	  * 			  {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is
 	  * 			  recommended to not use a filter in this case.
+	  *
+	  * @param out         the OutputStream to print to
+	  * @param outputLevel the output about a http exchange
+	  * @return a Filter
 	  */
 	 public static Filter createOutputFilter (OutputStream out, OutputLevel outputLevel) {
 		  return new OutputFilter(out, outputLevel);

@@ -43,8 +43,11 @@
  * processing of requests.</li></ul>
  * <p>
  * The {@link com.sun.net.httpserver.SimpleFileServer} class offers a simple
- * out-of-the-box HTTP file server. A default implementation is provided via
- * the main entry point of this module.
+ * out-of-the-box HTTP file server for educational purposes. A default
+ * implementation is provided via the main entry point of this module, which can
+ * be used on the command line as such:
+ * <p>
+ * {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}
  *
  * @uses com.sun.net.httpserver.spi.HttpServerProvider
  *

@@ -123,7 +123,10 @@
  	<p>
  	The {@link com.sun.net.httpserver.SimpleFileServer} class offers a simple
    out-of-the-box file server. A default implementation is provided via the main
-   entry point of the {@code jdk.httpserver} module.
+   entry point of the {@code jdk.httpserver} module, which can be used on the
+   command line as such:
+   <p>
+   {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}
 
    @since 1.6
  */

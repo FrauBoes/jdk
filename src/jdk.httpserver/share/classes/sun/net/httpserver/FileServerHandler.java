@@ -40,8 +40,8 @@ import java.nio.file.Path;
  * A basic HTTP file server handler for static content.
  * <p>
  * Must be given an absolute pathname to the directory to be served.
- * Supports only HEAD and GET requests. Directory listings, html and text files
- * can be served, other MIME types are supported on a best-guess basis.
+ * Supports only HEAD and GET requests. Directory listings and files can be
+ * served, content types are supported on a best-guess basis.
  */
 public final class FileServerHandler implements HttpHandler {
     private final Path ROOT;
@@ -133,7 +133,8 @@ public final class FileServerHandler implements HttpHandler {
 
     private String getMediaType(String file) {
         String type = URLConnection.getFileNameMap().getContentTypeFor(file);
-        return type != null ? type : "text/html";
+        return type != null ? type : "content/unknown";
+        // the latter causes a save dialog to be presented to the user
     }
 
     private void listFiles(HttpExchange t, Path path, String file)
