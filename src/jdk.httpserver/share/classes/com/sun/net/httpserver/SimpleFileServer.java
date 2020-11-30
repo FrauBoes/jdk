@@ -65,7 +65,7 @@ import java.util.function.Function;
  * on a {@linkplain #createFileServerHandler(Path) best-guess}. The handler
  * supports only HEAD and GET requests; to handle request methods other than
  * HEAD and GET, the handler instance can be complemented by the server's other
- * handlers, or it can be wrapped by a custom {@code HttpHandler}.
+ * handlers, or it can conditionally delegate the exchange to another {@code HttpHandler}.
  * <p>Example complemented file handler:
  * <pre>    {@code var handler = SimpleFileServer.createFileServerHandler(Path.of("/some/path/"));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/browse/", handler);
@@ -78,24 +78,13 @@ import java.util.function.Function;
  *             // echo request body
  *        }
  *    }}</pre>
- * <p>Example of a wrapped file handler
- * <pre>    {@code var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", new WrappedHandler());
+ * <p>Example delegating file handler
+ * <pre>    {@code var handler = SimpleFileServer.createFileServerHandler(Path.of("."))
+ *         .delegating(new PostHandler(), method -> method.equals("POST"));
+ *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/browse/", handler);
  *    server.start();
  *    ...
- *    class WrappedHandler implements HttpHandler {
- *        private static final HttpHandler fileServerHandler = SimpleFileServer.createFileServerHandler(Path.of("/some/path/"));
- *
- *        @Override
- *        public void handle(HttpExchange t) throws IOException {
- *            if (t.getRequestMethod().equals("POST"))
- *                handlePost(t);
- *            else fileServerHandler.handle(t);
- *        }
- *
- *        void handlePost(HttpExchange t) throws IOException {
- *            // handle POST request
- *       }
- *    }}</pre>
+ *    }</pre>
  * <p><b>Output filter</b><p>
  * {@link #createOutputFilter(OutputStream, OutputLevel)} returns a {@code Filter}
  * that prints output about a {@code HttpExchange} to the given
