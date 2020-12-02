@@ -150,8 +150,7 @@ public class Resolve {
                 Feature.POST_APPLICABILITY_VARARGS_ACCESS_CHECK.allowedInSource(source);
         polymorphicSignatureScope = WriteableScope.create(syms.noSymbol);
         allowModules = Feature.MODULES.allowedInSource(source);
-        allowRecords = (!preview.isPreview(Feature.RECORDS) || preview.isEnabled()) &&
-                Feature.RECORDS.allowedInSource(source);
+        allowRecords = Feature.RECORDS.allowedInSource(source);
     }
 
     /** error symbols, which are returned when resolution fails
@@ -1584,9 +1583,23 @@ public class Resolve {
             currentResolutionContext.addApplicableCandidate(sym, mt);
         } catch (InapplicableMethodException ex) {
             currentResolutionContext.addInapplicableCandidate(sym, ex.getDiagnostic());
+            // Currently, an InapplicableMethodException occurs.
+            // If bestSoFar.kind was ABSENT_MTH, return an InapplicableSymbolError(kind is WRONG_MTH).
+            // If bestSoFar.kind was HIDDEN(AccessError)/WRONG_MTH/WRONG_MTHS, return an InapplicableSymbolsError(kind is WRONG_MTHS).
+            // See JDK-8255968 for more information.
             switch (bestSoFar.kind) {
                 case ABSENT_MTH:
                     return new InapplicableSymbolError(currentResolutionContext);
+                case HIDDEN:
+                    if (bestSoFar instanceof AccessError) {
+                        // Add the JCDiagnostic of previous AccessError to the currentResolutionContext
+                        // and construct InapplicableSymbolsError.
+                        // Intentionally fallthrough.
+                        currentResolutionContext.addInapplicableCandidate(((AccessError) bestSoFar).sym,
+                                ((AccessError) bestSoFar).getDiagnostic(JCDiagnostic.DiagnosticType.FRAGMENT, null, null, site, null, argtypes, typeargtypes));
+                    } else {
+                        return bestSoFar;
+                    }
                 case WRONG_MTH:
                     bestSoFar = new InapplicableSymbolsError(currentResolutionContext);
                 default:
@@ -1594,9 +1607,31 @@ public class Resolve {
             }
         }
         if (!isAccessible(env, site, sym)) {
-            return (bestSoFar.kind == ABSENT_MTH)
-                ? new AccessError(env, site, sym)
-                : bestSoFar;
+            AccessError curAccessError = new AccessError(env, site, sym);
+            JCDiagnostic curDiagnostic = curAccessError.getDiagnostic(JCDiagnostic.DiagnosticType.FRAGMENT, null, null, site, null, argtypes, typeargtypes);
+            // Currently, an AccessError occurs.
+            // If bestSoFar.kind was ABSENT_MTH, return an AccessError(kind is HIDDEN).
+            // If bestSoFar.kind was HIDDEN(AccessError), WRONG_MTH, WRONG_MTHS, return an InapplicableSymbolsError(kind is WRONG_MTHS).
+            // See JDK-8255968 for more information.
+            if (bestSoFar.kind == ABSENT_MTH) {
+                bestSoFar = curAccessError;
+            } else if (bestSoFar.kind == WRONG_MTH) {
+                // Add the JCDiagnostic of current AccessError to the currentResolutionContext
+                // and construct InapplicableSymbolsError.
+                currentResolutionContext.addInapplicableCandidate(sym, curDiagnostic);
+                bestSoFar = new InapplicableSymbolsError(currentResolutionContext);
+            } else if (bestSoFar.kind == WRONG_MTHS) {
+                // Add the JCDiagnostic of current AccessError to the currentResolutionContext
+                currentResolutionContext.addInapplicableCandidate(sym, curDiagnostic);
+            } else if (bestSoFar.kind == HIDDEN && bestSoFar instanceof AccessError) {
+                // Add the JCDiagnostics of previous and current AccessError to the currentResolutionContext
+                // and construct InapplicableSymbolsError.
+                currentResolutionContext.addInapplicableCandidate(((AccessError) bestSoFar).sym,
+                        ((AccessError) bestSoFar).getDiagnostic(JCDiagnostic.DiagnosticType.FRAGMENT, null, null, site, null, argtypes, typeargtypes));
+                currentResolutionContext.addInapplicableCandidate(sym, curDiagnostic);
+                bestSoFar = new InapplicableSymbolsError(currentResolutionContext);
+            }
+            return bestSoFar;
         }
         return (bestSoFar.kind.isResolutionError() && bestSoFar.kind != AMBIGUOUS)
             ? sym
@@ -2742,9 +2777,21 @@ public class Resolve {
             // Check that there is already a method symbol for the method
             // type and owner
             if (types.isSameType(mtype, sym.type) &&
-                spMethod.owner == sym.owner) {
+                    spMethod.owner == sym.owner) {
                 return sym;
             }
+        }
+
+        Type spReturnType = spMethod.asType().getReturnType();
+        if (types.isSameType(spReturnType, syms.objectType)) {
+            // Polymorphic return, pass through mtype
+        } else if (!types.isSameType(spReturnType, mtype.getReturnType())) {
+            // Retain the sig poly method's return type, which differs from that of mtype
+            // Will result in an incompatible return type error
+            mtype = new MethodType(mtype.getParameterTypes(),
+                    spReturnType,
+                    mtype.getThrownTypes(),
+                    syms.methodClass);
         }
 
         // Create the desired method
