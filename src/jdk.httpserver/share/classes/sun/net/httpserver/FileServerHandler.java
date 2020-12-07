@@ -23,6 +23,7 @@
 
 package sun.net.httpserver;
 
+import com.sun.net.httpserver.DelegatingHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -63,13 +64,14 @@ public final class FileServerHandler implements HttpHandler {
 
     public static HttpHandler create(Path root, Function<String, String> mimeTable) {
         HttpHandler handler = new FileServerHandler(root, mimeTable);
-        return handler.discardingRequestBody()
-                .delegating(FileServerHandler::handleNotAllowed,
-                        Predicate.not(SUPPORTED_METHODS::contains));
+        return DelegatingHandler.of(handler).discardingRequestBody()
+                .delegatingIf(Predicate.not(SUPPORTED_METHODS::contains),
+                        FileServerHandler::handleNotAllowed);
     }
 
     static void handleNotAllowed(HttpExchange exchange) throws IOException {
         try (exchange) {
+            exchange.getResponseHeaders().set("Allow", "HEAD, GET");
             exchange.sendResponseHeaders(405, -1);
         }
     }
@@ -205,6 +207,7 @@ public final class FileServerHandler implements HttpHandler {
             (int) '/'  , "&#x2F;"  )
     );
 
+    @Override
     public void handle(HttpExchange exchange) throws IOException {
         try (exchange) {
             Path path = mapToPath(exchange, root);

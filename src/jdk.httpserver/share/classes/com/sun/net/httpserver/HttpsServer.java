@@ -28,6 +28,8 @@ package com.sun.net.httpserver;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
+
 import com.sun.net.httpserver.spi.HttpServerProvider;
 
 /**
