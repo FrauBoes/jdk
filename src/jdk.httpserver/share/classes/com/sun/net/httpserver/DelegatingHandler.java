@@ -36,20 +36,25 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public final class DelegatingHandler implements HttpHandler {
+    private final HttpHandler handler;
 
-    private DelegatingHandler() { }
+    private DelegatingHandler(HttpHandler handler) {
+        this.handler = handler;
+    }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        try (exchange) {
-            exchange.sendResponseHeaders(404, -1);
-        }
+        handler.handle(exchange);
     }
 
     // Factories
 
     public static DelegatingHandler of() {
-        return new DelegatingHandler();
+        return new DelegatingHandler(exchange -> {
+            try (exchange) {
+                exchange.sendResponseHeaders(404, -1);
+            }
+        });
     }
 
     public static DelegatingHandler of(HttpHandler handler) {
@@ -77,7 +82,7 @@ public final class DelegatingHandler implements HttpHandler {
                 otherHandler.handle(exchange);
             else handle(exchange);
         };
-        return DelegatingHandler.of(handler);
+        return new DelegatingHandler(handler);
     }
 
     /**
@@ -93,7 +98,7 @@ public final class DelegatingHandler implements HttpHandler {
             }
             this.handle(exchange);
         };
-        return DelegatingHandler.of(handler);
+        return new DelegatingHandler(handler);
     }
 
     /**
@@ -113,7 +118,7 @@ public final class DelegatingHandler implements HttpHandler {
             ((UnmodifiableHeaders) exchange.getRequestHeaders()).map.add(name, value);
             this.handle(exchange);
         };
-        return DelegatingHandler.of(handler);
+        return new DelegatingHandler(handler);
     }
 
     /**
@@ -140,6 +145,6 @@ public final class DelegatingHandler implements HttpHandler {
             };
             this.handle(new DelegatingHttpExchange(newExchange));
         };
-        return DelegatingHandler.of(handler);
+        return new DelegatingHandler(handler);
     }
 }
