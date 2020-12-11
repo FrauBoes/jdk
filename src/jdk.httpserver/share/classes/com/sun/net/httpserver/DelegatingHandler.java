@@ -35,6 +35,15 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
+/**
+ * A set of convenience handlers that delegate the {@code HttpExchange}.
+ *
+ *
+ *
+ * @apiNote why introduced, how to use
+ *
+ * @since 17
+ */
 public final class DelegatingHandler implements HttpHandler {
     private final HttpHandler handler;
 
@@ -42,13 +51,24 @@ public final class DelegatingHandler implements HttpHandler {
         this.handler = handler;
     }
 
+    /**
+     * Forwards the exchange to this handler.
+     *
+     * @param exchange the exchange containing the request from the
+     *                 client and used to send the response
+     * @throws IOException
+     */
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         handler.handle(exchange);
     }
 
-    // Factories
-
+    /**
+     * Returns a handler that always sends the HTTP {@code 404 Not Found} client
+     * response code.
+     *
+     * @return a handler
+     */
     public static DelegatingHandler of() {
         return new DelegatingHandler(exchange -> {
             try (exchange) {
@@ -57,11 +77,17 @@ public final class DelegatingHandler implements HttpHandler {
         });
     }
 
+    /**
+     * Returns a handler that forwards all exchanges to the passed {@code handler}.
+     *
+     * @param handler a handler to forward to
+     * @return a handler
+     * @throws NullPointerException if handler is null
+     */
     public static DelegatingHandler of(HttpHandler handler) {
+        Objects.requireNonNull(handler);
         return DelegatingHandler.of().delegatingIf(p -> true, handler);
     }
-
-    // Composites
 
     /**
      * Returns a handler that delegates the exchange to an {@code otherHandler}
@@ -126,8 +152,6 @@ public final class DelegatingHandler implements HttpHandler {
      * the request URI, before forwarding to this handler. The {@code URI}
      * returned by the operator will be the effective uri of the exchange when
      * forwarded.
-     * <p>
-     * Question: Maybe we should put restrictions on the type transforms?
      *
      * @param uriOperator the URI operator
      * @return a handler
