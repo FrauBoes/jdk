@@ -43,5 +43,5 @@ public interface HttpHandler {
      *                 client and used to send the response
      * @throws NullPointerException if exchange is {@code null}
      */
-    public abstract void handle(HttpExchange exchange) throws IOException;
+    public abstract void handle (HttpExchange exchange) throws IOException;
 }
