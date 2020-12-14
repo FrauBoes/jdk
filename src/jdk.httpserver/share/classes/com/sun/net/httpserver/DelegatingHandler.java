@@ -46,7 +46,7 @@ import java.util.function.UnaryOperator;
  * The instance methods are conveniences to retrieve common types of handlers
  * that can be used individually or in combination. The methods are based around
  * the central elements of a HTTP request: <ul>
- * <li>{@link #delegatingIf(Predicate, HttpHandler)} returns a handler that
+ * <li>{@link #delegatingIfMethod(Predicate, HttpHandler)} returns a handler that
  * delegates based on the HTTP method of the incoming request,</li>
  * <li>{@link #inspectingURI(UnaryOperator)} returns a handler that can inspect
  * and replace the request {@code URI},</li>
@@ -64,8 +64,8 @@ import java.util.function.UnaryOperator;
  *    var aHandler = new SomeHeadAndGetHandler();
  *    var anotherHandler = new SomePutHandler();
  *    var combinedHandler = DelegatingHandler.of()
- *        .delegatingIf(m -> m.equals("HEAD") || m.equals("GET"), aHandler)
- *        .delegatingIf(m -> m.equals("PUT"), anotherHandler)
+ *        .delegatingIfMethod(m -> m.equals("HEAD") || m.equals("GET"), aHandler)
+ *        .delegatingIfMethod(m -> m.equals("PUT"), anotherHandler)
  *        .inspectingURI(uri -> uri.resolve(someURI))
  *        .addingRequestHeader("someHeader", "someValue");
  *    var s = HttpServer.create(new InetSocketAddress(8080), 10, "/", combinedHandler);
@@ -122,7 +122,7 @@ public final class DelegatingHandler implements HttpHandler {
      */
     public static DelegatingHandler of(HttpHandler handler) {
         Objects.requireNonNull(handler);
-        return DelegatingHandler.of().delegatingIf(p -> true, handler);
+        return DelegatingHandler.of().delegatingIfMethod(p -> true, handler);
     }
 
     /**
@@ -135,8 +135,8 @@ public final class DelegatingHandler implements HttpHandler {
      * @return a handler
      * @throws NullPointerException if any argument is null
      */
-    public final DelegatingHandler delegatingIf(Predicate<String> methodTest,
-                                                HttpHandler otherHandler) {
+    public final DelegatingHandler delegatingIfMethod(Predicate<String> methodTest,
+                                                      HttpHandler otherHandler) {
         Objects.requireNonNull(otherHandler);
         Objects.requireNonNull(methodTest);
         HttpHandler handler = exchange -> {

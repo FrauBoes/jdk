@@ -84,7 +84,7 @@ import java.util.function.Function;
  * Example of a delegating file handler
  * <pre>    {@code var handler = DelegatingHandler.of(
  *                  SimpleFileServer.createFileHandler(Path.of("/some/path")))
- *                      .delegatingIf(method -> method.equals("PUT"), new PutHandler());
+ *                      .delegatingIfMethod(method -> method.equals("PUT"), new PutHandler());
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();
  *    ...

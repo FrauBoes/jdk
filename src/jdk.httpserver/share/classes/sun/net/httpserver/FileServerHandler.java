@@ -65,7 +65,7 @@ public final class FileServerHandler implements HttpHandler {
     public static HttpHandler create(Path root, Function<String, String> mimeTable) {
         return DelegatingHandler.of(new FileServerHandler(root, mimeTable))
                 .discardingRequestBody()
-                .delegatingIf(Predicate.not(SUPPORTED_METHODS::contains),
+                .delegatingIfMethod(Predicate.not(SUPPORTED_METHODS::contains),
                         FileServerHandler::handleNotAllowed);
     }
 
