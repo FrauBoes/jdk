@@ -36,11 +36,47 @@ import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 /**
- * A set of convenience handlers that delegate the {@code HttpExchange}.
+ * A set of convenience handlers that can delegate the {@code HttpExchange}.
+ * <p>
+ * A {@code DelegatingHandler} instance can be obtained from one of the static
+ * factory methods. If no {@code HttpHandler} is passed, the returned handler
+ * handles all exchanges by sending a client error response code. Otherwise, the
+ * returned handler delegates all exchanges to the passed {@code HttpHandler}.
+ * <p>
+ * The instance methods are conveniences to retrieve common types of handlers
+ * that can be used individually or in combination. The methods are based around
+ * the central elements of a HTTP request: <ul>
+ * <li>{@link #delegatingIf(Predicate, HttpHandler)} returns a handler that
+ * delegates based on the HTTP method of the incoming request,</li>
+ * <li>{@link #inspectingURI(UnaryOperator)} returns a handler that can inspect
+ * and replace the request {@code URI},</li>
+ * <li>{@link #addingRequestHeader(String, String)} returns a handler that can
+ * add a header to the request,</li>
+ * <li>{@link #discardingRequestBody()} returns a handler that preemptively
+ * reads and discards the request body.</li>
  *
- *
- *
- * @apiNote why introduced, how to use
+ * @apiNote This class offers conveniences to create common types of
+ * {@code HttpHandlers}. The instance methods can be chained together in order
+ * to modify or extend the functionality of a given handler.
+ * <p>
+ * Example of a chained {@code DelegatingHandler}:
+ * <pre>    {@code var someURI = URI.create("https://someuri");
+ *    var aHandler = new SomeHeadAndGetHandler();
+ *    var anotherHandler = new SomePutHandler();
+ *    var combinedHandler = DelegatingHandler.of()
+ *        .delegatingIf(m -> m.equals("HEAD") || m.equals("GET"), aHandler)
+ *        .delegatingIf(m -> m.equals("PUT"), anotherHandler)
+ *        .inspectingURI(uri -> uri.resolve(someURI))
+ *        .addingRequestHeader("someHeader", "someValue");
+ *    var s = HttpServer.create(new InetSocketAddress(8080), 10, "/", combinedHandler);
+ *    s.start();
+ * }</pre>
+ * <p>
+ * Example of a handler that always discards the request body:
+ * <pre>    {@code var handler = DelegatingHandler.of(aHandler).discardingRequestBody();
+ *    var server = HttpServer.create(new InetSocketAddress(8080), 10), "/", handler);
+ *    server.start();
+ * }</pre>
  *
  * @since 17
  */
@@ -112,17 +148,26 @@ public final class DelegatingHandler implements HttpHandler {
     }
 
     /**
-     * Returns a handler that reads and discards any request body before
-     * forwarding the exchange to this handler.
+     * Returns a handler that allows inspection (and possible replacement) of
+     * the request URI, before forwarding to this handler. The {@code URI}
+     * returned by the operator will be the effective uri of the exchange when
+     * forwarded.
      *
-     * @return a discarding handler
+     * @param uriOperator the URI operator
+     * @return a handler
+     * @throws NullPointerException if any argument is null
      */
-    public final DelegatingHandler discardingRequestBody() {
+    public final DelegatingHandler inspectingURI(UnaryOperator<URI> uriOperator) {
+        Objects.requireNonNull(uriOperator);
         HttpHandler handler = exchange -> {
-            try (InputStream is = exchange.getRequestBody()) {
-                is.readAllBytes();
-            }
-            this.handle(exchange);
+            var uri = uriOperator.apply(exchange.getRequestURI());
+            var newExchange = new DelegatingHttpExchange(exchange) {
+                @Override
+                public URI getRequestURI() {
+                    return uri;
+                }
+            };
+            this.handle(new DelegatingHttpExchange(newExchange));
         };
         return new DelegatingHandler(handler);
     }
@@ -148,26 +193,17 @@ public final class DelegatingHandler implements HttpHandler {
     }
 
     /**
-     * Returns a handler that allows inspection (and possible replacement) of
-     * the request URI, before forwarding to this handler. The {@code URI}
-     * returned by the operator will be the effective uri of the exchange when
-     * forwarded.
+     * Returns a handler that reads and discards any request body before
+     * forwarding the exchange to this handler.
      *
-     * @param uriOperator the URI operator
-     * @return a handler
-     * @throws NullPointerException if any argument is null
+     * @return a discarding handler
      */
-    public final DelegatingHandler inspectingURI(UnaryOperator<URI> uriOperator) {
-        Objects.requireNonNull(uriOperator);
+    public final DelegatingHandler discardingRequestBody() {
         HttpHandler handler = exchange -> {
-            var uri = uriOperator.apply(exchange.getRequestURI());
-            var newExchange = new DelegatingHttpExchange(exchange) {
-                @Override
-                public URI getRequestURI() {
-                    return uri;
-                }
-            };
-            this.handle(new DelegatingHttpExchange(newExchange));
+            try (InputStream is = exchange.getRequestBody()) {
+                is.readAllBytes();
+            }
+            this.handle(exchange);
         };
         return new DelegatingHandler(handler);
     }

@@ -70,4 +70,4 @@ make compile-commands-hotspot
 
 ### IDE support for Java code
 
-This section is a work in progress. 
+This section is a work in progress.
