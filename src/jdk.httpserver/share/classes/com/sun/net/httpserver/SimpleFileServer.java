@@ -289,8 +289,8 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code HttpServer} with a {@code HttpHandler} that displays
-     * the static content of the given directory in HTML.
+     * Creates a {@code HttpServer} with a {@code DelegatingHandler} that
+     * displays the static content of the given directory in HTML.
      * <p>
      * The server is bound to the wildcard address and the given port. The handler
      * is mapped to the URI path "/" via a {@code HttpContext}. It only supports
@@ -330,20 +330,21 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code HttpHandler} that displays the static content of the
-     * given directory in HTML.
+     * Creates a {@code DelegatingHandler} that displays the static content of
+     * the given directory in HTML.
      * <p>
      * The handler supports only HEAD and GET requests and can serve directory
      * listings and files. Content types are supported on a best-guess basis.
      *
-     * @param root the root directory to be served, must be an absolute path
-     * @return a HttpHandler
      * @implNote The content type of a file is guessed by calling
      * {@link java.net.FileNameMap#getContentTypeFor(String)} on the
      * {@link URLConnection#getFileNameMap() mimeTable} found.
+     *
+     * @param root the root directory to be served, must be an absolute path
+     * @return a handler
      * @throws NullPointerException if the argument is null
      */
-    public static HttpHandler createFileHandler(Path root) {
+    public static DelegatingHandler createFileHandler(Path root) {
         Objects.requireNonNull(root);
         return FileServerHandler.create(root, MIME_TABLE);
     }
@@ -354,12 +355,13 @@ public final class SimpleFileServer {
      * <p>
      * The output format is specified by the {@link OutputLevel outputLevel}.
      *
-     * @param out         the OutputStream to print to
-     * @param outputLevel the output about a http exchange
-     * @return a Filter
      * @implNote An {@link IllegalArgumentException} is thrown if
      * {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is recommended
      * to not use a filter in this case.
+     *
+     * @param out         the OutputStream to print to
+     * @param outputLevel the output about a http exchange
+     * @return a Filter
      * @throws NullPointerException if any argument is null
      */
     public static Filter createOutputFilter(OutputStream out,
