@@ -33,8 +33,6 @@
    <p>
    Programmers must implement the {@link com.sun.net.httpserver.HttpHandler} interface. This interface
    provides a callback which is invoked to handle incoming requests from clients.
-   Alternatively, an instance of the implementing class {@link com.sun.net.httpserver.DelegatingHandler}
-   can be obtained, which provides a set of convenience handlers.
    A HTTP request and its response is known as an exchange. HTTP exchanges are
    represented by the {@link com.sun.net.httpserver.HttpExchange} class.
    The {@link com.sun.net.httpserver.HttpServer} class is used to listen for incoming TCP connections
@@ -123,10 +121,12 @@
     });
    </pre></blockquote>
    <p>
-   The {@link com.sun.net.httpserver.SimpleFileServer} class offers a simple
-   out-of-the-box file server. A default implementation is provided via the main
-   entry point of the {@code jdk.httpserver} module, which can be used on the
-   command line as such:
+   The {@link com.sun.net.httpserver.SimpleFileServer} class offers a set of
+   convenience handlers with
+   {@link com.sun.net.httpserver.SimpleFileServer.DelegatingHandler}
+   as well as a simple out-of-the-box file server. A default implementation is
+   provided via the main entry point of the {@code jdk.httpserver} module,
+   which can be used on the command line as such:
    <pre>
          {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}
    </pre>
