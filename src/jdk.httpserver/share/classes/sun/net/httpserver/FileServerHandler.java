@@ -23,7 +23,6 @@
 
 package sun.net.httpserver;
 
-import com.sun.net.httpserver.DelegatingHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -40,6 +39,8 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static com.sun.net.httpserver.SimpleFileServer.DelegatingHandler;
 
 /**
  * A basic HTTP file server handler for static content.
@@ -62,7 +63,8 @@ public final class FileServerHandler implements HttpHandler {
         this.mimeTable = mimeTable;
     }
 
-    public static HttpHandler create(Path root, Function<String, String> mimeTable) {
+    public static DelegatingHandler create(Path root,
+                                           Function<String, String> mimeTable) {
         return DelegatingHandler.of(new FileServerHandler(root, mimeTable))
                 .discardingRequestBody()
                 .delegatingIfMethod(Predicate.not(SUPPORTED_METHODS::contains),

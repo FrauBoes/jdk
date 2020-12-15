@@ -23,17 +23,23 @@
 
 package com.sun.net.httpserver;
 
+import sun.net.httpserver.DelegatingHttpExchange;
 import sun.net.httpserver.FileServerHandler;
 import sun.net.httpserver.OutputFilter;
+import sun.net.httpserver.UnmodifiableHeaders;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * A simple HTTP file server and its components, provided for educational purposes.
@@ -112,6 +118,139 @@ public final class SimpleFileServer {
             s -> URLConnection.getFileNameMap().getContentTypeFor(s);
 
     private SimpleFileServer() {
+    }
+
+    /**
+     * A set of convenience handlers that can delegate the {@code HttpExchange}.
+     */
+    public static final class DelegatingHandler implements HttpHandler {
+        private final HttpHandler handler;
+
+        private DelegatingHandler(HttpHandler handler) {
+            this.handler = handler;
+        }
+
+        /**
+         * Forwards the exchange to this handler.
+         *
+         * @param exchange the exchange containing the request from the
+         *                 client and used to send the response
+         * @throws IOException
+         */
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            handler.handle(exchange);
+        }
+
+        /**
+         * Returns a handler that always sends the HTTP {@code 404 Not Found}
+         * client response code.
+         *
+         * @return a handler
+         */
+        public static DelegatingHandler of() {
+            return new DelegatingHandler(exchange -> {
+                try (exchange) {
+                    exchange.sendResponseHeaders(404, -1);
+                }
+            });
+        }
+
+        /**
+         * Returns a handler that forwards all exchanges to the passed
+         * {@code handler}.
+         *
+         * @param handler a handler to forward to
+         * @return a handler
+         * @throws NullPointerException if handler is null
+         */
+        public static DelegatingHandler of(HttpHandler handler) {
+            Objects.requireNonNull(handler);
+            return DelegatingHandler.of().delegatingIfMethod(p -> true, handler);
+        }
+
+        /**
+         * Returns a handler that delegates the exchange to an {@code otherHandler}
+         * if the request method of the exchange matches the {@code methodTest}.
+         * All other exchanges are forwarded to this handler.
+         *
+         * @param otherHandler another handler
+         * @param methodTest   a predicate given the request method
+         * @return a handler
+         * @throws NullPointerException if any argument is null
+         */
+        public final DelegatingHandler delegatingIfMethod(Predicate<String> methodTest,
+                                                          HttpHandler otherHandler) {
+            Objects.requireNonNull(otherHandler);
+            Objects.requireNonNull(methodTest);
+            HttpHandler handler = exchange -> {
+                if (methodTest.test(exchange.getRequestMethod()))
+                    otherHandler.handle(exchange);
+                else handle(exchange);
+            };
+            return new DelegatingHandler(handler);
+        }
+
+        /**
+         * Returns a handler that allows inspection (and possible replacement)
+         * of the request URI, before forwarding to this handler. The {@code URI}
+         * returned by the operator will be the effective uri of the exchange
+         * when forwarded.
+         *
+         * @param uriOperator the URI operator
+         * @return a handler
+         * @throws NullPointerException if any argument is null
+         */
+        public final DelegatingHandler inspectingURI(UnaryOperator<URI> uriOperator) {
+            Objects.requireNonNull(uriOperator);
+            HttpHandler handler = exchange -> {
+                var uri = uriOperator.apply(exchange.getRequestURI());
+                var newExchange = new DelegatingHttpExchange(exchange) {
+                    @Override
+                    public URI getRequestURI() {
+                        return uri;
+                    }
+                };
+                this.handle(new DelegatingHttpExchange(newExchange));
+            };
+            return new DelegatingHandler(handler);
+        }
+
+        /**
+         * Returns a handler that adds a request header and value to the exchange
+         * before forwarding to this handler.
+         *
+         * @param name  the header name
+         * @param value the header value
+         * @return a handler
+         * @throws NullPointerException if any argument is null
+         */
+        public final DelegatingHandler addingRequestHeader(String name,
+                                                           String value) {
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(value);
+            HttpHandler handler = exchange -> {
+                ((UnmodifiableHeaders) exchange.getRequestHeaders()).map.add(name, value);
+                this.handle(exchange);
+            };
+            return new DelegatingHandler(handler);
+        }
+
+        /**
+         * Returns a handler that reads and discards any request body before
+         * forwarding the exchange to this handler.
+         *
+         * @return a discarding handler
+         */
+        public final DelegatingHandler discardingRequestBody() {
+            HttpHandler handler = exchange -> {
+                try (InputStream is = exchange.getRequestBody()) {
+                    is.readAllBytes();
+                }
+                this.handle(exchange);
+            };
+            return new DelegatingHandler(handler);
+        }
     }
 
     /**
