@@ -70,7 +70,7 @@ import java.util.Map;
  * @since 1.6
  */
 
-public abstract class HttpExchange implements AutoCloseable {
+public abstract class HttpExchange implements AutoCloseable, HttpRequest {
 
     /**
      * Constructor for subclasses to call.

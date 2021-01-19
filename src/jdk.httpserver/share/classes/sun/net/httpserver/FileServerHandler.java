@@ -23,7 +23,6 @@
 
 package sun.net.httpserver;
 
-import com.sun.net.httpserver.DelegatingHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -39,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * A basic HTTP file server handler for static content.
@@ -63,9 +61,8 @@ public final class FileServerHandler implements HttpHandler {
     }
 
     public static HttpHandler create(Path root, Function<String, String> mimeTable) {
-        return DelegatingHandler.of(new FileServerHandler(root, mimeTable))
-                .discardingRequestBody()
-                .delegatingIfMethod(Predicate.not(SUPPORTED_METHODS::contains),
+        return new FileServerHandler(root, mimeTable)
+                .handlingIf(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
                         FileServerHandler::handleNotAllowed);
     }
 
@@ -113,6 +110,13 @@ public final class FileServerHandler implements HttpHandler {
                 + exchange.getRequestHeaders().getFirst("Host")
                 + exchange.getRequestURI().getPath() + "/");
         exchange.sendResponseHeaders(301, -1);
+    }
+
+
+    void discardRequestBody(HttpExchange exchange) throws IOException {
+        try (InputStream is = exchange.getRequestBody()) {
+            is.readAllBytes();
+        }
     }
 
     boolean testNotFound(HttpExchange exchange, Path path) throws IOException {
@@ -210,6 +214,7 @@ public final class FileServerHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         try (exchange) {
+            discardRequestBody(exchange);
             Path path = mapToPath(exchange, root);
             if (testNotFound(exchange, path)) {
                 return;
