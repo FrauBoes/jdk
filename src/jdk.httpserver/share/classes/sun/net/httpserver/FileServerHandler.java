@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public final class FileServerHandler implements HttpHandler {
 
     public static HttpHandler create(Path root, Function<String, String> mimeTable) {
         return new FileServerHandler(root, mimeTable)
-                .handlingIf(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
+                .handleOrElse(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
                         FileServerHandler::handleNotAllowed);
     }
 

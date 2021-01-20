@@ -26,7 +26,6 @@
 package com.sun.net.httpserver;
 
 import sun.net.httpserver.DelegatingHttpExchange;
-import sun.net.httpserver.UnmodifiableHeaders;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,17 +53,17 @@ public interface HttpHandler {
     public abstract void handle (HttpExchange exchange) throws IOException;
 
     /**
-     * Returns a handler that forwards any exchange that matches the
-     * {@code exchangeTest} to this handler. All other exchanges are forwarded
-     * to the fallback handler.
+     * Complements this handler with a fallback handler. Any exchange that
+     * matches the {@code requestTest} is handled by this handler. All other
+     * exchanges are handled by the fallback handler.
      *
      * @param requestTest    a predicate given the exchange
      * @param fallbackHandler another handler
      * @return a handler
      * @throws NullPointerException if any argument is null
      */
-    default HttpHandler handlingIf(Predicate<HttpRequest> requestTest,
-                                 HttpHandler fallbackHandler) {
+    default HttpHandler handleOrElse(Predicate<HttpRequest> requestTest,
+                                     HttpHandler fallbackHandler) {
         Objects.requireNonNull(fallbackHandler);
         Objects.requireNonNull(requestTest);
         return exchange -> {
@@ -74,54 +73,31 @@ public interface HttpHandler {
         };
     }
 
-    default HttpHandler inspecting(UnaryOperator<HttpRequest> requestOperator) {
+    /**
+     * Returns a handler that allows inspection (and possible replacement) of
+     * the request state, before handling the exchange. The {@code HttpRequest}
+     * returned by the operator will be the effective request state of the
+     * exchange when handled.
+     *
+     * @param requestOperator the request operator
+     * @return a handler
+     * @throws NullPointerException if the argument is null
+     */
+    default HttpHandler adaptRequest(UnaryOperator<HttpRequest> requestOperator) {
         Objects.requireNonNull(requestOperator);
         return exchange -> {
             var request = requestOperator.apply(exchange);
-            this.handle(new DelegatingHttpExchange(request));
-        };
-    }
-
-    /**
-     * Returns a handler that allows inspection (and possible replacement) of
-     * the request URI, before forwarding to this handler. The {@code URI}
-     * returned by the operator will be the effective uri of the exchange when
-     * forwarded.
-     *
-     * @param uriOperator the URI operator
-     * @return a handler
-     * @throws NullPointerException if any argument is null
-     */
-    default HttpHandler inspectingURI(UnaryOperator<URI> uriOperator) {
-        Objects.requireNonNull(uriOperator);
-        return exchange -> {
-            var uri = uriOperator.apply(exchange.getRequestURI());
             var newExchange = new DelegatingHttpExchange(exchange) {
                 @Override
-                public URI getRequestURI() {
-                    return uri;
-                }
-            };
-            this.handle(new DelegatingHttpExchange(newExchange));
-        };
-    }
+                public URI getRequestURI() { return request.getRequestURI(); }
 
-    /**
-     * Returns a handler that adds a request header and value to the exchange
-     * before forwarding to this handler.
-     *
-     * @param name  the header name
-     * @param value the header value
-     * @return a handler
-     * @throws NullPointerException if any argument is null
-     */
-    default HttpHandler addingRequestHeader(String name, String value) {
-        Objects.requireNonNull(name);
-        Objects.requireNonNull(value);
-        return exchange -> {
-            ((UnmodifiableHeaders) exchange.getRequestHeaders())
-                    .map.add(name, value);
-            this.handle(exchange);
+                @Override
+                public String getRequestMethod() { return request.getRequestMethod(); }
+
+                @Override
+                public Headers getRequestHeaders() { return request.getRequestHeaders(); }
+            };
+            this.handle(newExchange);
         };
     }
 }
