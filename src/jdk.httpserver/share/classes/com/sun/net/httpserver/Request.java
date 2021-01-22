@@ -28,9 +28,14 @@ package com.sun.net.httpserver;
 import sun.net.httpserver.UnmodifiableHeaders;
 
 import java.net.URI;
+import java.nio.channels.ScatteringByteChannel;
 
 /**
- * Immutable HTTP Request state
+ * The immutable HTTP request state of an {@code HttpExchange}.
+ *
+ * ...
+ *
+ * @since 17
  */
 public interface Request {
 
@@ -50,9 +55,7 @@ public interface Request {
             public String getRequestMethod() { return r.getRequestMethod(); }
 
             @Override
-            public Headers getRequestHeaders() {
-                return r.getRequestHeaders();
-            }
+            public Headers getRequestHeaders() { return r.getRequestHeaders(); }
         };
     }
 
@@ -60,17 +63,13 @@ public interface Request {
         final Request r = this;
         return new Request() {
             @Override
-            public URI getRequestURI() {
-                return r.getRequestURI();
-            }
+            public URI getRequestURI() { return r.getRequestURI(); }
 
             @Override
             public String getRequestMethod() { return requestMethod; }
 
             @Override
-            public Headers getRequestHeaders() {
-                return r.getRequestHeaders();
-            }
+            public Headers getRequestHeaders() { return r.getRequestHeaders(); }
         };
     }
 

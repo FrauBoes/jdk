@@ -40,18 +40,18 @@ import java.util.function.Predicate;
  * A simple HTTP file server and its components, for educational purposes.
  * <p>
  * The simple file server is composed of <ul>
- * <li>a {@link HttpServer HttpServer} that is bound to the wildcard
+ * <li>an {@link HttpServer HttpServer} that is bound to the wildcard
  * address and a given port,</li>
- * <li>a {@link HttpHandler HttpHandler} that displays the static content of
+ * <li>an {@link HttpHandler HttpHandler} that displays the static content of
  * a given directory in HTML,</li>
- * <li>an optional {@link Filter Filter} that outputs information about a
+ * <li>an optional {@link Filter Filter} that outputs information about an
  * {@link HttpExchange HttpExchange}. The output format is specified by a
  * {@link OutputLevel OutputLevel}.</li></ul>
  * <p>
  * The components can be retrieved for reuse and extension via the static
  * methods provided.
  * <p><b>Simple file server</b><p>
- * {@link #createFileServer(int, Path, OutputLevel)} returns a
+ * {@link #createFileServer(int, Path, OutputLevel)} returns an
  * {@link HttpServer HttpServer} that is a simple out-of-the-box file server.
  * It comes with a handler that displays the static content of the given
  * directory in HTML, and an optional filter that prints output about the
@@ -61,7 +61,7 @@ import java.util.function.Predicate;
  * <pre>    {@code var server = SimpleFileServer.createFileServer(8080, Path.of("/some/path"), OutputLevel.DEFAULT);
  *    server.start();}</pre>
  * <p><b>File server handler</b><p>
- * {@link #createFileHandler(Path)} returns a {@code HttpHandler} that
+ * {@link #createFileHandler(Path)} returns an {@code HttpHandler} that
  * displays the static content of the given directory in HTML. The handler can
  * serve directory listings and files, the content type of a file is determined
  * on a {@linkplain #createFileHandler(Path) best-guess} basis. The handler
@@ -69,7 +69,7 @@ import java.util.function.Predicate;
  * HEAD and GET, the handler instance can be complemented, either by adding
  * additional handlers to the server, or by composing a single handler via
  * {@link HttpHandler#handleIf(Predicate, HttpHandler)}.
- * <p>Example of adding file handlers to the server:
+ * <p>Example of adding file handlers to a server:
  * <pre>    {@code class PutHandler implements HttpHandler {
  *        @Override
  *        public void handle(HttpExchange exchange) throws IOException {
@@ -85,15 +85,14 @@ import java.util.function.Predicate;
  * <p>
  * Example of composing a single file handler
  * <pre>    {@code var handler = new PutHandler()
- *                     .handleIf(request -> request.getRequestMethod.equals("PUT"),
- *                     SimpleFileServer.createFileHandler(Path.of("/some/path")));
+ *                         .handleIf(request -> request.getRequestMethod.equals("PUT"),
+ *                         SimpleFileServer.createFileHandler(Path.of("/some/path")));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();
- *    ...
  *    }</pre>
  * <p><b>Output filter</b><p>
  * {@link #createOutputFilter(OutputStream, OutputLevel)} returns a {@code Filter}
- * that prints output about a {@code HttpExchange} to the given
+ * that prints output about an {@code HttpExchange} to the given
  * {@code OutputStream}. The output format is specified by the
  * {@link OutputLevel outputLevel}.
  * <p>
@@ -117,7 +116,7 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Describes the output produced by a {@code HttpExchange}.
+     * Describes the output produced by an {@code HttpExchange}.
      */
     public enum OutputLevel {
         /**
@@ -152,11 +151,11 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code HttpServer} with a {@code HttpHandler} that displays
+     * Creates an {@code HttpServer} with an {@code HttpHandler} that displays
      * the static content of the given directory in HTML.
      * <p>
      * The server is bound to the wildcard address and the given port. The handler
-     * is mapped to the URI path "/" via a {@code HttpContext}. It only supports
+     * is mapped to the URI path "/" via an {@code HttpContext}. It only supports
      * HEAD and GET requests and serves directory listings, html and text files.
      * Other MIME types are supported on a best-guess basis.
      * <p>
@@ -170,8 +169,8 @@ public final class SimpleFileServer {
      *
      * @param port        the port number
      * @param root        the root directory to be served, must be an absolute path
-     * @param outputLevel the output about a http exchange
-     * @return a HttpServer
+     * @param outputLevel the output about an http exchange
+     * @return an HttpServer
      * @throws UncheckedIOException
      * @throws NullPointerException if any of the object arguments is null
      */
@@ -193,14 +192,14 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code HttpHandler} that displays the static content of the
+     * Creates an {@code HttpHandler} that displays the static content of the
      * given directory in HTML.
      * <p>
      * The handler supports only HEAD and GET requests and can serve directory
      * listings and files. Content types are supported on a best-guess basis.
      *
      * @param root the root directory to be served, must be an absolute path
-     * @return a HttpHandler
+     * @return an HttpHandler
      * @implNote The content type of a file is guessed by calling
      * {@link java.net.FileNameMap#getContentTypeFor(String)} on the
      * {@link URLConnection#getFileNameMap() mimeTable} found.
@@ -212,13 +211,13 @@ public final class SimpleFileServer {
     }
 
     /**
-     * Creates a {@code Filter} that prints output about a {@code HttpExchange}
+     * Creates a {@code Filter} that prints output about an {@code HttpExchange}
      * to the given {@code OutputStream}.
      * <p>
      * The output format is specified by the {@link OutputLevel outputLevel}.
      *
      * @param out         the OutputStream to print to
-     * @param outputLevel the output about a http exchange
+     * @param outputLevel the output about an http exchange
      * @return a Filter
      * @implNote An {@link IllegalArgumentException} is thrown if
      * {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is recommended

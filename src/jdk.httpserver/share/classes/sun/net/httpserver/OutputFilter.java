@@ -35,7 +35,7 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * A Filter that outputs information about a HttpExchange.
+ * A Filter that outputs information about an HttpExchange.
  * <p>
  * If the outputLevel is DEFAULT, the format is based on the
  * <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format'>Common Logfile Format</a>.
