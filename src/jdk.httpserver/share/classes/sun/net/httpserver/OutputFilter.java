@@ -94,6 +94,6 @@ public final class OutputFilter extends Filter {
 	 }
 
 	 public String description () {
-		  return "HttpExchange OutputFilter (outputLevel: " + outputLevel + ")";
+	 	return "HttpExchange OutputFilter (outputLevel: " + outputLevel + ")";
 	 }
 }

@@ -62,7 +62,7 @@ public final class FileServerHandler implements HttpHandler {
 
     public static HttpHandler create(Path root, Function<String, String> mimeTable) {
         return new FileServerHandler(root, mimeTable)
-                .handleOrElse(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
+                .handleIf(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
                         FileServerHandler::handleNotAllowed);
     }
 

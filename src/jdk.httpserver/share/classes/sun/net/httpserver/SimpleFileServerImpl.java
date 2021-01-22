@@ -41,9 +41,9 @@ import static java.lang.System.out;
  * a given directory.
  * <p>
  * It is composed of a HttpHandler that displays the static content of the given
- * directory in HTML, a HttpServer that serves the content of the wildcard address
- * and the given port, and an optional OutputFilter that prints information about
- * the HttpExchange to System.out.
+ * directory in HTML, a HttpServer that serves the content of the wildcard
+ * address and the given port, and an optional OutputFilter that prints
+ * information about the HttpExchange to System.out.
  * <p>
  * The implementation is provided via the main entry point of the jdk.httpserver
  * module.
@@ -69,12 +69,14 @@ final class SimpleFileServerImpl {
                 switch (option) {
                     case "-p" -> port = Integer.parseInt(options.next());
                     case "-d" -> root = Path.of(options.next());
-                    case "-o" -> outputLevel = Enum.valueOf(OutputLevel.class, options.next().toUpperCase(Locale.ROOT));
+                    case "-o" -> outputLevel = Enum.valueOf(OutputLevel.class,
+                            options.next().toUpperCase(Locale.ROOT));
                     default -> throw new AssertionError();
                 }
             }
         } catch (NoSuchElementException | IllegalArgumentException | AssertionError e) {
-            out.println("usage: java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]");
+            out.println("usage: java -m jdk.httpserver [-p port] [-d directory] " +
+                    "[-o none|default|verbose]");
             System.exit(1);
         }
 

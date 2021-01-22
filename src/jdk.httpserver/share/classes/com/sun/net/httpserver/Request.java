@@ -32,7 +32,7 @@ import java.net.URI;
 /**
  * Immutable HTTP Request state
  */
-public interface HttpRequest {
+public interface Request {
 
     URI getRequestURI();
 
@@ -40,43 +40,43 @@ public interface HttpRequest {
 
     Headers getRequestHeaders();
 
-//    default HttpRequest with(URI requestURI) {
-//        final HttpRequest r = this;
-//        return new HttpRequest() {
-//            @Override
-//            public URI getRequestURI() { return requestURI; }
-//
-//            @Override
-//            public String getRequestMethod() { return r.getRequestMethod(); }
-//
-//            @Override
-//            public Headers getRequestHeaders() {
-//                return r.getRequestHeaders();
-//            }
-//        };
-//    }
-//
-//    default HttpRequest with(String requestMethod) {
-//        final HttpRequest r = this;
-//        return new HttpRequest() {
-//            @Override
-//            public URI getRequestURI() {
-//                return r.getRequestURI();
-//            }
-//
-//            @Override
-//            public String getRequestMethod() { return requestMethod; }
-//
-//            @Override
-//            public Headers getRequestHeaders() {
-//                return r.getRequestHeaders();
-//            }
-//        };
-//    }
+    default Request with(URI requestURI) {
+        final Request r = this;
+        return new Request() {
+            @Override
+            public URI getRequestURI() { return requestURI; }
 
-    default HttpRequest with(String headerName, String headerValue) {
-        final HttpRequest r = this;
-        return new HttpRequest() {
+            @Override
+            public String getRequestMethod() { return r.getRequestMethod(); }
+
+            @Override
+            public Headers getRequestHeaders() {
+                return r.getRequestHeaders();
+            }
+        };
+    }
+
+    default Request with(String requestMethod) {
+        final Request r = this;
+        return new Request() {
+            @Override
+            public URI getRequestURI() {
+                return r.getRequestURI();
+            }
+
+            @Override
+            public String getRequestMethod() { return requestMethod; }
+
+            @Override
+            public Headers getRequestHeaders() {
+                return r.getRequestHeaders();
+            }
+        };
+    }
+
+    default Request with(String headerName, String headerValue) {
+        final Request r = this;
+        return new Request() {
             @Override
             public URI getRequestURI() { return r.getRequestURI(); }
 
@@ -92,9 +92,9 @@ public interface HttpRequest {
         };
     }
 
-    default HttpRequest with(Headers requestHeaders) {
-        final HttpRequest r = this;
-        return new HttpRequest() {
+    default Request with(Headers requestHeaders) {
+        final Request r = this;
+        return new Request() {
             @Override
             public URI getRequestURI() { return r.getRequestURI(); }
 

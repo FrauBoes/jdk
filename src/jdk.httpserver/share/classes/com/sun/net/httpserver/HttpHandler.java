@@ -53,17 +53,17 @@ public interface HttpHandler {
     public abstract void handle (HttpExchange exchange) throws IOException;
 
     /**
-     * Complements this handler with a fallback handler. Any exchange that
+     * Complements this handler with a fallback handler. Any request that
      * matches the {@code requestTest} is handled by this handler. All other
-     * exchanges are handled by the fallback handler.
+     * requests are handled by the fallback handler.
      *
-     * @param requestTest    a predicate given the exchange
+     * @param requestTest    a predicate given the request
      * @param fallbackHandler another handler
      * @return a handler
      * @throws NullPointerException if any argument is null
      */
-    default HttpHandler handleOrElse(Predicate<HttpRequest> requestTest,
-                                     HttpHandler fallbackHandler) {
+    default HttpHandler handleIf(Predicate<Request> requestTest,
+                                 HttpHandler fallbackHandler) {
         Objects.requireNonNull(fallbackHandler);
         Objects.requireNonNull(requestTest);
         return exchange -> {
@@ -75,7 +75,7 @@ public interface HttpHandler {
 
     /**
      * Returns a handler that allows inspection (and possible replacement) of
-     * the request state, before handling the exchange. The {@code HttpRequest}
+     * the request state, before handling the exchange. The {@code Request}
      * returned by the operator will be the effective request state of the
      * exchange when handled.
      *
@@ -83,7 +83,7 @@ public interface HttpHandler {
      * @return a handler
      * @throws NullPointerException if the argument is null
      */
-    default HttpHandler adaptRequest(UnaryOperator<HttpRequest> requestOperator) {
+    default HttpHandler adaptRequest(UnaryOperator<Request> requestOperator) {
         Objects.requireNonNull(requestOperator);
         return exchange -> {
             var request = requestOperator.apply(exchange);
@@ -98,6 +98,43 @@ public interface HttpHandler {
                 public Headers getRequestHeaders() { return request.getRequestHeaders(); }
             };
             this.handle(newExchange);
+        };
+    }
+
+    /**
+     * Static alternative (tbd)
+     */
+    static HttpHandler handleIf(Predicate<Request> requestTest,
+                                HttpHandler conditionalHandler,
+                                 HttpHandler fallbackHandler) {
+        Objects.requireNonNull(fallbackHandler);
+        Objects.requireNonNull(requestTest);
+        return exchange -> {
+            if (requestTest.test(exchange))
+                conditionalHandler.handle(exchange);
+            else fallbackHandler.handle(exchange);
+        };
+    }
+
+    /**
+     * Static alternative (tbd)
+     */
+    static HttpHandler adaptRequest(HttpHandler handler,
+                                    UnaryOperator<Request> requestOperator) {
+        Objects.requireNonNull(requestOperator);
+        return exchange -> {
+            var request = requestOperator.apply(exchange);
+            var newExchange = new DelegatingHttpExchange(exchange) {
+                @Override
+                public URI getRequestURI() { return request.getRequestURI(); }
+
+                @Override
+                public String getRequestMethod() { return request.getRequestMethod(); }
+
+                @Override
+                public Headers getRequestHeaders() { return request.getRequestHeaders(); }
+            };
+            handler.handle(newExchange);
         };
     }
 }

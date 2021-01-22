@@ -34,9 +34,10 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
- * A simple HTTP file server and its components, provided for educational purposes.
+ * A simple HTTP file server and its components, for educational purposes.
  * <p>
  * The simple file server is composed of <ul>
  * <li>a {@link HttpServer HttpServer} that is bound to the wildcard
@@ -65,9 +66,10 @@ import java.util.function.Function;
  * serve directory listings and files, the content type of a file is determined
  * on a {@linkplain #createFileHandler(Path) best-guess} basis. The handler
  * supports only HEAD and GET requests; to handle request methods other than
- * HEAD and GET, the handler instance can be complemented by the server's other
- * handlers, or it can conditionally delegate the exchange to another {@code HttpHandler}.
- * <p>Example of a complemented file handler:
+ * HEAD and GET, the handler instance can be complemented, either by adding
+ * additional handlers to the server, or by composing a single handler via
+ * {@link HttpHandler#handleIf(Predicate, HttpHandler)}.
+ * <p>Example of adding file handlers to the server:
  * <pre>    {@code class PutHandler implements HttpHandler {
  *        @Override
  *        public void handle(HttpExchange exchange) throws IOException {
@@ -81,10 +83,10 @@ import java.util.function.Function;
  *    server.start();
  *    }</pre>
  * <p>
- * Example of a delegating file handler
- * <pre>    {@code var handler = DelegatingHandler.of(
- *                  SimpleFileServer.createFileHandler(Path.of("/some/path")))
- *                      .delegatingIfMethod(method -> method.equals("PUT"), new PutHandler());
+ * Example of composing a single file handler
+ * <pre>    {@code var handler = new PutHandler()
+ *                     .handleIf(request -> request.getRequestMethod.equals("PUT"),
+ *                     SimpleFileServer.createFileHandler(Path.of("/some/path")));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();
  *    ...
