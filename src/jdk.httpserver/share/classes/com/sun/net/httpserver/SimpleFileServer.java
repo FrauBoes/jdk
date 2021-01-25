@@ -39,6 +39,8 @@ import java.util.function.Predicate;
 /**
  * A simple HTTP file server and its components, for educational purposes.
  * <p>
+ * Warning: The {@code SimpleFileServer} is not meant for production.
+ * <p>
  * The simple file server is composed of: <ul>
  * <li>an {@link HttpServer HttpServer} that is bound to the wildcard
  * address and a given port,</li>

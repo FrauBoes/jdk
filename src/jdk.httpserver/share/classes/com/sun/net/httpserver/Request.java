@@ -105,7 +105,8 @@ public interface Request {
     /**
      * Returns a request that adds a header to this request.
      * The passed name-value pair is added to the map of headers of this request.
-     * All other request state remains unchanged.
+     * If a header with this name already exists, its value is replaced by the
+     * passed value. All other request state remains unchanged.
      *
      * @param headerName  the new header name
      * @param headerValue the new header value
