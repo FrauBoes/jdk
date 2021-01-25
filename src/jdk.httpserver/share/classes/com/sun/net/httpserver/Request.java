@@ -29,22 +29,44 @@ import sun.net.httpserver.UnmodifiableHeaders;
 
 import java.net.URI;
 import java.nio.channels.ScatteringByteChannel;
+import java.util.Map;
 
 /**
  * The immutable HTTP request state of an {@code HttpExchange}.
- *
- * ...
  *
  * @since 17
  */
 public interface Request {
 
+    /**
+     * Returns the request {@link URI}. See {@link HttpExchange#getRequestURI()}.
+     *
+     * @return the request {@code URI}
+     */
     URI getRequestURI();
 
+    /**
+     * Returns the request method. See {@link HttpExchange#getRequestMethod()}}.
+     *
+     * @return the request method string
+     */
     String getRequestMethod();
 
+    /**
+     * Returns an immutable {@link Map} containing the headers of this request.
+     * See {@link HttpExchange#getRequestHeaders()}.
+     *
+     * @return a read-only {@code Map} to access request headers
+     */
     Headers getRequestHeaders();
 
+    /**
+     * Returns a request that replaces the {@code requestURI} of this request.
+     * All other request state remains unchanged.
+     *
+     * @param requestURI the new request {@code URI}
+     * @return a request
+     */
     default Request with(URI requestURI) {
         final Request r = this;
         return new Request() {
@@ -59,6 +81,13 @@ public interface Request {
         };
     }
 
+    /**
+     * Returns a request that replaces the {@code requestMethod} of this request.
+     * All other request state remains unchanged.
+     *
+     * @param requestMethod the new request method string
+     * @return a request
+     */
     default Request with(String requestMethod) {
         final Request r = this;
         return new Request() {
@@ -73,6 +102,16 @@ public interface Request {
         };
     }
 
+    /**
+     * Returns a request that adds a header to this request.
+     * The passed name-value pair is added to the map of headers of this request.
+     * All other request state remains unchanged.
+     *
+     * @param headerName  the new header name
+     * @param headerValue the new header value
+     *
+     * @return a request
+     */
     default Request with(String headerName, String headerValue) {
         final Request r = this;
         return new Request() {
@@ -91,6 +130,13 @@ public interface Request {
         };
     }
 
+    /**
+     * Returns a request that replaces the {@code Headers} of this request.
+     * All other request state remains unchanged.
+     *
+     * @param requestHeaders the new request {@code Headers}
+     * @return a request
+     */
     default Request with(Headers requestHeaders) {
         final Request r = this;
         return new Request() {

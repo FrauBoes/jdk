@@ -38,6 +38,20 @@ import java.util.function.UnaryOperator;
  * A handler which is invoked to process HTTP exchanges. Each
  * HTTP exchange is handled by one of these handlers.
  *
+ * @apiNote The methods {@link #handleIf(Predicate, HttpHandler)} and
+ * {@link #adaptRequest(UnaryOperator)} are conveniences to complement and adapt
+ * a given handler, in order to extend or modify its functionality.
+ * <p>
+ * Example of a complemented and adapted {@code HttpHandler}:
+ * <pre>    {@code var uri = URI.create("https://someuri");
+ *    var handler = new SomePutHandler();
+ *    var fallbackHandler = new SomeOtherHandler();
+ *    var finalHandler = handler.handleIf(r -> r.getRequestMethod().equals("PUT"), fallbackHandler)
+ *                              .adaptRequest(r -> r.with(r.getRequestURI().resolve(uri));
+ *    var s = HttpServer.create(new InetSocketAddress(8080), 10, "/", finalHandler);
+ *    s.start();
+ * }</pre>
+ *
  * @since 1.6
  */
 public interface HttpHandler {
@@ -57,10 +71,11 @@ public interface HttpHandler {
      * matches the {@code requestTest} is handled by this handler. All other
      * requests are handled by the fallback handler.
      *
-     * @param requestTest    a predicate given the request
+     * @param requestTest     a predicate given the request
      * @param fallbackHandler another handler
      * @return a handler
      * @throws NullPointerException if any argument is null
+     * @since 17
      */
     default HttpHandler handleIf(Predicate<Request> requestTest,
                                  HttpHandler fallbackHandler) {
@@ -74,14 +89,14 @@ public interface HttpHandler {
     }
 
     /**
-     * Returns a handler that allows inspection (and possible replacement) of
-     * the request state, before handling the exchange. The {@code Request}
-     * returned by the operator will be the effective request state of the
-     * exchange when handled.
+     * Allows this handler to inspect and adapt the request state, before
+     * handling the exchange. The {@code Request} returned by the operator
+     * will be the effective request state of the exchange when handled.
      *
      * @param requestOperator the request operator
      * @return a handler
      * @throws NullPointerException if the argument is null
+     * @since 17
      */
     default HttpHandler adaptRequest(UnaryOperator<Request> requestOperator) {
         Objects.requireNonNull(requestOperator);

@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 /**
  * A simple HTTP file server and its components, for educational purposes.
  * <p>
- * The simple file server is composed of <ul>
+ * The simple file server is composed of: <ul>
  * <li>an {@link HttpServer HttpServer} that is bound to the wildcard
  * address and a given port,</li>
  * <li>an {@link HttpHandler HttpHandler} that displays the static content of
@@ -66,10 +66,10 @@ import java.util.function.Predicate;
  * serve directory listings and files, the content type of a file is determined
  * on a {@linkplain #createFileHandler(Path) best-guess} basis. The handler
  * supports only HEAD and GET requests; to handle request methods other than
- * HEAD and GET, the handler instance can be complemented, either by adding
- * additional handlers to the server, or by composing a single handler via
+ * HEAD and GET, the handler can be complemented, either by adding additional
+ * handlers to the server, or by composing a single handler via
  * {@link HttpHandler#handleIf(Predicate, HttpHandler)}.
- * <p>Example of adding file handlers to a server:
+ * <p>Example of adding multiple handlers to a server:
  * <pre>    {@code class PutHandler implements HttpHandler {
  *        @Override
  *        public void handle(HttpExchange exchange) throws IOException {
@@ -83,7 +83,7 @@ import java.util.function.Predicate;
  *    server.start();
  *    }</pre>
  * <p>
- * Example of composing a single file handler
+ * Example of composing a single handler:
  * <pre>    {@code var handler = new PutHandler()
  *                         .handleIf(request -> request.getRequestMethod.equals("PUT"),
  *                         SimpleFileServer.createFileHandler(Path.of("/some/path")));
@@ -106,6 +106,8 @@ import java.util.function.Predicate;
  * the command line as such:
  * <p>
  * <pre>    {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}</pre>
+ *
+ * @since 17
  */
 public final class SimpleFileServer {
 
