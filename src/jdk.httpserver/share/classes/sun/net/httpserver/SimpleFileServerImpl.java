@@ -82,7 +82,7 @@ final class SimpleFileServerImpl {
 
         try {
             var server = SimpleFileServer.createFileServer(port, root, outputLevel);
-            server.setExecutor(Executors.newCachedThreadPool());
+            server.setExecutor(Executors.newSingleThreadExecutor());
             server.start();
             out.printf("Serving %s on port %d ...\n", root, port);
         } catch (UncheckedIOException e) {

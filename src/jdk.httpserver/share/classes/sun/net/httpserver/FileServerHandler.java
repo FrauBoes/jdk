@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ import java.util.function.Function;
 public final class FileServerHandler implements HttpHandler {
     private final Path root;
     private final Function<String, String> mimeTable;
+    private static final Charset CHARSET = Charset.defaultCharset();
     private static final List<String> SUPPORTED_METHODS = List.of("HEAD", "GET");
 
     private FileServerHandler(Path root, Function<String, String> mimeTable) {
@@ -68,14 +70,14 @@ public final class FileServerHandler implements HttpHandler {
 
     static void handleNotAllowed(HttpExchange exchange) throws IOException {
         try (exchange) {
-            exchange.getResponseHeaders().set("Allow", "HEAD, GET");
             exchange.sendResponseHeaders(405, -1);
+            exchange.getResponseHeaders().set("Allow", "HEAD, GET");
         }
     }
 
     void handleHEAD(HttpExchange exchange, Path path) throws IOException {
-        exchange.getResponseHeaders().set("Content-Length", Long.toString(Files.size(path)));
         exchange.sendResponseHeaders(200, -1);
+        exchange.getResponseHeaders().set("Content-Length", Long.toString(Files.size(path)));
     }
 
     void handleGET(HttpExchange exchange, Path path) throws IOException {
@@ -95,8 +97,8 @@ public final class FileServerHandler implements HttpHandler {
     }
 
     void handleNotFound(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "text/html");
         exchange.sendResponseHeaders(404, 0);
+        exchange.getResponseHeaders().set("Content-Type", "text/html; charset="+CHARSET);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(("<h2>File not found</h2>"
                     + sanitize.apply(exchange.getRequestURI().getPath(), chars)
@@ -105,7 +107,6 @@ public final class FileServerHandler implements HttpHandler {
     }
 
     void handleMovedPermanently(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Content-Type", "text/html");
         exchange.getResponseHeaders().set("Location", "http://"
                 + exchange.getRequestHeaders().getFirst("Host")
                 + exchange.getRequestURI().getPath() + "/");
@@ -145,8 +146,8 @@ public final class FileServerHandler implements HttpHandler {
     }
 
     Path indexFile(Path path) {
-        Path html = path.resolve("indexFile.html");
-        Path htm = path.resolve("indexFile.htm");
+        Path html = path.resolve("index.html");
+        Path htm = path.resolve("index.htm");
         return Files.exists(html) ? html : Files.exists(htm) ? htm : null;
     }
 
@@ -162,7 +163,7 @@ public final class FileServerHandler implements HttpHandler {
 
     void listFiles(HttpExchange exchange, Path path) throws IOException {
         exchange.sendResponseHeaders(200, 0);
-        exchange.getResponseHeaders().set("Content-Type", "text/html");
+        exchange.getResponseHeaders().set("Content-Type", "text/html; charset="+CHARSET);
         try (OutputStream os = exchange.getResponseBody();
              PrintStream ps = new PrintStream(os)) {
             ps.println(openHTML
@@ -213,6 +214,7 @@ public final class FileServerHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        System.out.println(exchange.getRequestURI().getPath());
         try (exchange) {
             discardRequestBody(exchange);
             Path path = mapToPath(exchange, root);
