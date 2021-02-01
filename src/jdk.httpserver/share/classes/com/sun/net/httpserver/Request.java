@@ -27,6 +27,9 @@ package com.sun.net.httpserver;
 
 import sun.net.httpserver.UnmodifiableHeaders;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.channels.ScatteringByteChannel;
 import java.util.Map;
@@ -149,5 +152,21 @@ public interface Request {
 
             @Override
             public Headers getRequestHeaders() { return requestHeaders; }};
+    }
+
+    /**
+     * Returns a request that discards the body of this request.
+     * All other request state remains unchanged.
+     *
+     * @return a request
+     */
+    default Request discardBody() {
+        final HttpExchange exchange = (HttpExchange) this;
+        try (InputStream is = exchange.getRequestBody()) {
+            is.readAllBytes();
+        } catch (IOException ioe) {
+            throw new UncheckedIOException("Could not discard request body", ioe);
+        }
+        return exchange;
     }
 }
