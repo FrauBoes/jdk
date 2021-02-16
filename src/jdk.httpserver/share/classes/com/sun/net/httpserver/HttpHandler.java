@@ -134,8 +134,8 @@ public interface HttpHandler {
     /**
      * Static alternative (tbd)
      */
-    static HttpHandler adaptRequest(HttpHandler handler,
-                                    UnaryOperator<Request> requestOperator) {
+    static HttpHandler adaptRequest(UnaryOperator<Request> requestOperator,
+                                    HttpHandler handler) {
         Objects.requireNonNull(requestOperator);
         return exchange -> {
             var request = requestOperator.apply(exchange);
