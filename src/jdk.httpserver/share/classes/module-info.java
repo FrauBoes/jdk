@@ -60,4 +60,7 @@ module jdk.httpserver {
     exports com.sun.net.httpserver.spi;
 
     uses com.sun.net.httpserver.spi.HttpServerProvider;
+
+    provides java.util.spi.ToolProvider
+            with com.sun.net.httpserver.SimpleServerToolProvider;
 }

@@ -26,6 +26,7 @@ package sun.net.httpserver;
 import com.sun.net.httpserver.SimpleFileServer;
 import com.sun.net.httpserver.SimpleFileServer.OutputLevel;
 
+import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -33,8 +34,6 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
-
-import static java.lang.System.out;
 
 /**
  * A class that provides a simple HTTP file server to serve the content of
@@ -48,10 +47,11 @@ import static java.lang.System.out;
  * The implementation is provided via the main entry point of the jdk.httpserver
  * module.
  */
-final class SimpleFileServerImpl {
+public final class SimpleFileServerImpl {
     private static final Path ROOT = Path.of("").toAbsolutePath();
     private static final int PORT = 8000;
     private static final OutputLevel OUTPUT_LEVEL = OutputLevel.DEFAULT;
+    private static PrintWriter out = new PrintWriter(System.out, true);
 
     /**
      * Starts a simple HTTP file server created on a directory.
@@ -88,5 +88,10 @@ final class SimpleFileServerImpl {
         } catch (UncheckedIOException e) {
             out.println("Connection failed: " + e.getMessage());
         }
+    }
+
+    public static void mainForProvider(PrintWriter o, PrintWriter err, String[] args) {
+        out = o;
+        main(args);
     }
 }
