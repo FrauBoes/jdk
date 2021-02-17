@@ -49,51 +49,51 @@ import java.time.format.DateTimeFormatter;
  * The fields rfc931, authuser and bytes are not captured in the implementation
  * and are always represented as '-'.
  * <p>
- * If the outputLevel is VERBOSE, the output format additionally includes
- * the request and response headers of the HttpExchange.
+ * If the outputLevel is VERBOSE, the output additionally includes the request
+ * and response headers of the HttpExchange. Request headers are prepended
+ * with '>', response headers with '<'.
  */
 public final class OutputFilter extends Filter {
-	 private static final DateTimeFormatter formatter =
-		 DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z");
-	 private final PrintStream printStream;
-	 private final OutputLevel outputLevel;
+    private static final DateTimeFormatter formatter =
+			DateTimeFormatter.ofPattern("dd/MMM/yyyy:HH:mm:ss Z");
+    private final PrintStream printStream;
+    private final OutputLevel outputLevel;
 
-	 public OutputFilter (OutputStream os, OutputLevel outputLevel) {
-	 	 if (outputLevel.equals(OutputLevel.NONE)) {
-	 	 	 throw new IllegalArgumentException("Not a valid outputLevel: " + outputLevel);
-		 }
-		  printStream = new PrintStream(os);
-		  this.outputLevel = outputLevel;
-	 }
+    public OutputFilter(OutputStream os, OutputLevel outputLevel) {
+        if (outputLevel.equals(OutputLevel.NONE)) {
+            throw new IllegalArgumentException("Not a valid outputLevel: " + outputLevel);
+        }
+        printStream = new PrintStream(os);
+        this.outputLevel = outputLevel;
+    }
 
-	 /**
-	  * The filter's implementation, which is invoked by the server
-	  */
-	 public void doFilter (HttpExchange t, Chain chain) throws IOException {
-		  chain.doFilter(t);
-		  String s = t.getLocalAddress().getAddress().getHostAddress() + " "
-			  + "- - "    // rfc931 and authuser
-			  + "[" + OffsetDateTime.now().format(formatter) + "] "
-			  + "\"" + t.getRequestMethod() + " " + t.getRequestURI() + "\" "
-			  + t.getResponseCode() + " "
-			  + "-";    // bytes
-		  printStream.println(s);
-		  if (outputLevel.equals(OutputLevel.VERBOSE)) {
-				logHeaders(t.getRequestHeaders(), ">");
-				logHeaders(t.getResponseHeaders(), "<");
-		  }
-	 }
+    /**
+     * The filter's implementation, which is invoked by the server
+     */
+    public void doFilter(HttpExchange t, Chain chain) throws IOException {
+        chain.doFilter(t);
+        String s = t.getRemoteAddress().getHostString() + " "
+				+ "- - "    // rfc931 and authuser
+                + "[" + OffsetDateTime.now().format(formatter) + "]\" "
+				+ t.getRequestMethod() + " " + t.getRequestURI() + "\" "
+				+ t.getResponseCode() + " " + "-";    // bytes
+        printStream.println(s);
+        if (outputLevel.equals(OutputLevel.VERBOSE)) {
+            logHeaders(">", t.getRequestHeaders());
+            logHeaders("<", t.getResponseHeaders());
+        }
+    }
 
-	 private void logHeaders (Headers headers, String sign) {
-		  headers.forEach((name, values) -> {
-				var sb = new StringBuilder();
-				values.forEach(v -> sb.append(v).append(" "));
-				printStream.println(sign + " " + name + ": " + sb.toString());
-		  });
-		  printStream.println(sign);
-	 }
+    private void logHeaders(String sign, Headers headers) {
+        headers.forEach((name, values) -> {
+            var sb = new StringBuilder();
+            values.forEach(v -> sb.append(v).append(" "));
+            printStream.println(sign + " " + name + ": " + sb.toString());
+        });
+        printStream.println(sign);
+    }
 
-	 public String description () {
-	 	return "HttpExchange OutputFilter (outputLevel: " + outputLevel + ")";
-	 }
+    public String description() {
+    	return "HttpExchange OutputFilter (outputLevel: " + outputLevel + ")";
+    }
 }
