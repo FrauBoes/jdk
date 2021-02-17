@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -81,6 +82,9 @@ public final class FileServerHandler implements HttpHandler {
     }
 
     void handleGET(HttpExchange exchange, Path path) throws IOException {
+        if (Files.isSymbolicLink(path)) {
+            handleNotFound(exchange);
+        }
         if (Files.isDirectory(path)) {
             if (testMissingSlash(exchange)) {
                 handleMovedPermanently(exchange);
@@ -188,9 +192,18 @@ public final class FileServerHandler implements HttpHandler {
 
     void printDirContent(PrintStream ps, Path path) throws IOException {
         Files.list(path)
+                .filter(p -> !isHiddenOrSymLink(p))
                 .map(p -> path.toUri().relativize(p.toUri()).toASCIIString())
                 .forEach(uri -> ps.println("<li><a href=\"" + uri
                         + "\">" + sanitize.apply(uri, chars) + "</a></li>"));
+    }
+
+    boolean isHiddenOrSymLink(Path path) {
+        try {
+            return Files.isHidden(path) || Files.isSymbolicLink(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     String mediaType(String file) {
