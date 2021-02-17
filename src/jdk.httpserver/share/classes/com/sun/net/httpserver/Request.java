@@ -167,6 +167,21 @@ public interface Request {
         } catch (IOException ioe) {
             throw new UncheckedIOException("Could not discard request body", ioe);
         }
-        return exchange;
+        return new Request() {
+            @Override
+            public URI getRequestURI() {
+                return exchange.getRequestURI();
+            }
+
+            @Override
+            public String getRequestMethod() {
+                return exchange.getRequestMethod();
+            }
+
+            @Override
+            public Headers getRequestHeaders() {
+                return exchange.getRequestHeaders();
+            }
+        };
     }
 }
