@@ -126,7 +126,7 @@
    only). A default implementation is provided via the main entry point of the
    {@code jdk.httpserver} module, which can be used on the command line as such:
    <pre>
-         {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}
+         {@code java -m jdk.httpserver [-b bind address] [-p port] [-d directory] [-o none|default|verbose]}
    </pre>
 
    @since 1.6

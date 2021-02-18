@@ -28,11 +28,13 @@ import com.sun.net.httpserver.SimpleFileServer.OutputLevel;
 
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
-import java.util.NoSuchElementException;
 import java.util.concurrent.Executors;
 
 /**
@@ -40,16 +42,23 @@ import java.util.concurrent.Executors;
  * a given directory.
  * <p>
  * It is composed of a HttpHandler that displays the static content of the given
- * directory in HTML, a HttpServer that serves the content of the wildcard
- * address and the given port, and an optional OutputFilter that prints
- * information about the HttpExchange to System.out.
+ * directory in HTML, a HttpServer that serves the content on the given address
+ * and port, and an OutputFilter that prints information about the HttpExchange
+ * to System.out.
+ * <p>
+ * Unless specified as arguments, the default values are:<ul>
+ * <li>address wildcard address</li>
+ * <li>port 8000</li>
+ * <li>directory current working directory</li>
+ * <li>outputLevel default</li></ul>
  * <p>
  * The implementation is provided via the main entry point of the jdk.httpserver
  * module.
  */
 public final class SimpleFileServerImpl {
-    private static final Path ROOT = Path.of("").toAbsolutePath();
+    private static final InetAddress ADDR = null;
     private static final int PORT = 8000;
+    private static final Path ROOT = Path.of("").toAbsolutePath();
     private static final OutputLevel OUTPUT_LEVEL = OutputLevel.DEFAULT;
     private static PrintWriter out = new PrintWriter(System.out, true);
 
@@ -59,6 +68,7 @@ public final class SimpleFileServerImpl {
      * @param args the command line options
      */
     public static void main(String[] args) {
+        InetAddress addr = ADDR;
         int port = PORT;
         Path root = ROOT;
         OutputLevel outputLevel = OUTPUT_LEVEL;
@@ -67,6 +77,7 @@ public final class SimpleFileServerImpl {
             while (options.hasNext()) {
                 String option = options.next();
                 switch (option) {
+                    case "-b" -> addr = InetAddress.getByName(options.next());
                     case "-p" -> port = Integer.parseInt(options.next());
                     case "-d" -> root = Path.of(options.next());
                     case "-o" -> outputLevel = Enum.valueOf(OutputLevel.class,
@@ -74,17 +85,19 @@ public final class SimpleFileServerImpl {
                     default -> throw new AssertionError();
                 }
             }
-        } catch (NoSuchElementException | IllegalArgumentException | AssertionError e) {
-            out.println("usage: java -m jdk.httpserver [-p port] [-d directory] " +
-                    "[-o none|default|verbose]");
+        } catch (AssertionError | UnknownHostException | NumberFormatException e) {
+            out.println("usage: java -m jdk.httpserver [-b bind address] "
+                    + "[-p port] [-d directory] [-o none|default|verbose]");
             System.exit(1);
         }
 
         try {
-            var server = SimpleFileServer.createFileServer(port, root, outputLevel);
+            var socketAddr = new InetSocketAddress(addr, port);
+            var server = SimpleFileServer.createFileServer(
+                    socketAddr, root, outputLevel);
             server.setExecutor(Executors.newSingleThreadExecutor());
             server.start();
-            out.printf("Serving %s on port %d ...\n", root, port);
+            out.printf("Serving %s on %s:%d ...\n", root, socketAddr.getHostString(), port);
         } catch (UncheckedIOException e) {
             out.println("Connection failed: " + e.getMessage());
         }

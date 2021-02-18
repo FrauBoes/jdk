@@ -37,13 +37,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A simple HTTP file server and its components, for educational purposes.
- * <p>
- * Warning: The {@code SimpleFileServer} is not meant for production.
+ * A simple HTTP file server and its components, for educational and development
+ * purposes only.
  * <p>
  * The simple file server is composed of: <ul>
- * <li>an {@link HttpServer HttpServer} that is bound to the wildcard
- * address and a given port,</li>
+ * <li>an {@link HttpServer HttpServer} that is bound to a given address,</li>
  * <li>an {@link HttpHandler HttpHandler} that displays the static content of
  * a given directory in HTML,</li>
  * <li>an optional {@link Filter Filter} that outputs information about an
@@ -53,14 +51,14 @@ import java.util.function.Predicate;
  * The components can be retrieved for reuse and extension via the static
  * methods provided.
  * <p><b>Simple file server</b><p>
- * {@link #createFileServer(int, Path, OutputLevel)} returns an
+ * {@link #createFileServer(InetSocketAddress, Path, OutputLevel)} returns an
  * {@link HttpServer HttpServer} that is a simple out-of-the-box file server.
  * It comes with a handler that displays the static content of the given
  * directory in HTML, and an optional filter that prints output about the
  * {@code HttpExchange} to {@code System.out}.
  * <p>
  * Example of a simple file server:
- * <pre>    {@code var server = SimpleFileServer.createFileServer(8080, Path.of("/some/path"), OutputLevel.DEFAULT);
+ * <pre>    {@code var server = SimpleFileServer.createFileServer(new InetSocketAddress(8080), Path.of("/some/path"), OutputLevel.DEFAULT);
  *    server.start();}</pre>
  * <p><b>File server handler</b><p>
  * {@link #createFileHandler(Path)} returns an {@code HttpHandler} that
@@ -107,7 +105,7 @@ import java.util.function.Predicate;
  * main entry point of the {@code jdk.httpserver} module, which can be used on
  * the command line as such:
  * <p>
- * <pre>    {@code java -m jdk.httpserver [-p port] [-d directory] [-o none|default|verbose]}</pre>
+ * <pre>    {@code java -m jdk.httpserver [-b bind address] [-p port] [-d directory] [-o none|default|verbose]}</pre>
  *
  * @since 17
  */
@@ -158,9 +156,9 @@ public final class SimpleFileServer {
      * Creates an {@code HttpServer} with an {@code HttpHandler} that displays
      * the static content of the given directory in HTML.
      * <p>
-     * The server is bound to the wildcard address and the given port. The handler
-     * is mapped to the URI path "/" via an {@code HttpContext}. It only supports
-     * HEAD and GET requests and serves directory listings, html and text files.
+     * The server is bound to the given address. The handler is mapped to the
+     * URI path "/" via an {@code HttpContext}. It only supports HEAD and GET
+     * requests and serves directory listings, html and text files.
      * Other MIME types are supported on a best-guess basis.
      * <p>
      * An optional {@code Filter} that prints information about the
@@ -171,23 +169,23 @@ public final class SimpleFileServer {
      * {@linkplain OutputLevel#DEFAULT default} or
      * {@linkplain OutputLevel#VERBOSE verbose} output format.
      *
-     * @param port        the port number
+     * @param addr        the address to listen on
      * @param root        the root directory to be served, must be an absolute path
      * @param outputLevel the output about an http exchange
      * @return an HttpServer
      * @throws UncheckedIOException
      * @throws NullPointerException if any of the object arguments is null
      */
-    public static HttpServer createFileServer(int port,
+    public static HttpServer createFileServer(InetSocketAddress addr,
                                               Path root,
                                               OutputLevel outputLevel) {
         Objects.requireNonNull(root);
         Objects.requireNonNull(outputLevel);
         try {
             return outputLevel.equals(OutputLevel.NONE)
-                    ? HttpServer.create(new InetSocketAddress(port), 0, "/",
+                    ? HttpServer.create(addr, 0, "/",
                     FileServerHandler.create(root, MIME_TABLE))
-                    : HttpServer.create(new InetSocketAddress(port), 0, "/",
+                    : HttpServer.create(addr, 0, "/",
                     FileServerHandler.create(root, MIME_TABLE),
                     new OutputFilter(System.out, outputLevel));
         } catch (IOException ioe) {
