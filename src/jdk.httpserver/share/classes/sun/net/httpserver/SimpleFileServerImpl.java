@@ -55,7 +55,7 @@ import java.util.concurrent.Executors;
  * The implementation is provided via the main entry point of the jdk.httpserver
  * module.
  */
-public final class SimpleFileServerImpl {
+final class SimpleFileServerImpl {
     private static final InetAddress ADDR = null;
     private static final int PORT = 8000;
     private static final Path ROOT = Path.of("").toAbsolutePath();
@@ -103,6 +103,13 @@ public final class SimpleFileServerImpl {
         }
     }
 
+    /**
+     * Starts a simple HTTP file server created on a directory, after setting out
+     *
+     * @param o    a writer to which output should be written
+     * @param err  a writer to which error messages should be written
+     * @param args the command line options
+     */
     public static void mainForProvider(PrintWriter o, PrintWriter err, String[] args) {
         out = o;
         main(args);

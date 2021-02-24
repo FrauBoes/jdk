@@ -1,12 +1,11 @@
-package com.sun.net.httpserver;
+package sun.net.httpserver;
 
 import java.io.PrintWriter;
 import java.util.spi.ToolProvider;
-import sun.net.httpserver.SimpleFileServerImpl;
 
 /**
  * An implementation of the {@link java.util.spi.ToolProvider ToolProvider} SPI,
- * providing access to the jdk.httpserver simpleserver.
+ * providing access to the jdk.httpserver simpleserver tool.
  *
  * @since 17
  */
