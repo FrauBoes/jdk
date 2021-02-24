@@ -27,11 +27,7 @@ package com.sun.net.httpserver;
 
 import sun.net.httpserver.UnmodifiableHeaders;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.URI;
-import java.nio.channels.ScatteringByteChannel;
 import java.util.Map;
 
 /**
@@ -64,48 +60,6 @@ public interface Request {
     Headers getRequestHeaders();
 
     /**
-     * Returns a request that replaces the {@code requestURI} of this request.
-     * All other request state remains unchanged.
-     *
-     * @param requestURI the new request {@code URI}
-     * @return a request
-     */
-    default Request with(URI requestURI) {
-        final Request r = this;
-        return new Request() {
-            @Override
-            public URI getRequestURI() { return requestURI; }
-
-            @Override
-            public String getRequestMethod() { return r.getRequestMethod(); }
-
-            @Override
-            public Headers getRequestHeaders() { return r.getRequestHeaders(); }
-        };
-    }
-
-    /**
-     * Returns a request that replaces the {@code requestMethod} of this request.
-     * All other request state remains unchanged.
-     *
-     * @param requestMethod the new request method string
-     * @return a request
-     */
-    default Request with(String requestMethod) {
-        final Request r = this;
-        return new Request() {
-            @Override
-            public URI getRequestURI() { return r.getRequestURI(); }
-
-            @Override
-            public String getRequestMethod() { return requestMethod; }
-
-            @Override
-            public Headers getRequestHeaders() { return r.getRequestHeaders(); }
-        };
-    }
-
-    /**
      * Returns a request that adds a header to this request.
      * The passed name-value pair is added to the map of headers of this request.
      * If a header with this name already exists, its value is replaced by the
@@ -130,57 +84,6 @@ public interface Request {
                 ((UnmodifiableHeaders) r.getRequestHeaders())
                         .map.add(headerName, headerValue);
                 return r.getRequestHeaders();
-            }
-        };
-    }
-
-    /**
-     * Returns a request that replaces the {@code Headers} of this request.
-     * All other request state remains unchanged.
-     *
-     * @param requestHeaders the new request {@code Headers}
-     * @return a request
-     */
-    default Request with(Headers requestHeaders) {
-        final Request r = this;
-        return new Request() {
-            @Override
-            public URI getRequestURI() { return r.getRequestURI(); }
-
-            @Override
-            public String getRequestMethod() { return r.getRequestMethod(); }
-
-            @Override
-            public Headers getRequestHeaders() { return requestHeaders; }};
-    }
-
-    /**
-     * Returns a request that discards the body of this request.
-     * All other request state remains unchanged.
-     *
-     * @return a request
-     */
-    default Request discardBody() {
-        final HttpExchange exchange = (HttpExchange) this;
-        try (InputStream is = exchange.getRequestBody()) {
-            is.readAllBytes();
-        } catch (IOException ioe) {
-            throw new UncheckedIOException("Could not discard request body", ioe);
-        }
-        return new Request() {
-            @Override
-            public URI getRequestURI() {
-                return exchange.getRequestURI();
-            }
-
-            @Override
-            public String getRequestMethod() {
-                return exchange.getRequestMethod();
-            }
-
-            @Override
-            public Headers getRequestHeaders() {
-                return exchange.getRequestHeaders();
             }
         };
     }
