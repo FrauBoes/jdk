@@ -28,7 +28,6 @@ package com.sun.net.httpserver;
 import sun.net.httpserver.DelegatingHttpExchange;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -38,7 +37,7 @@ import java.util.function.UnaryOperator;
  * A handler which is invoked to process HTTP exchanges. Each
  * HTTP exchange is handled by one of these handlers.
  *
- * @apiNote The methods {@link #handleIf(Predicate, HttpHandler)} and
+ * @apiNote The methods {@link #handleOrElse(Predicate, HttpHandler)} and
  * {@link #adaptRequest(UnaryOperator)} are conveniences to complement and adapt
  * a given handler, in order to extend or modify its functionality.
  * <p>
@@ -46,7 +45,7 @@ import java.util.function.UnaryOperator;
  * <pre>    {@code var uri = URI.create("https://someuri");
  *    var handler = new SomePutHandler();
  *    var fallbackHandler = new SomeOtherHandler();
- *    var finalHandler = handler.handleIf(r -> r.getRequestMethod().equals("PUT"), fallbackHandler)
+ *    var finalHandler = handler.handleOrElse(r -> r.getRequestMethod().equals("PUT"), fallbackHandler)
  *                              .adaptRequest(r -> r.with(r.getRequestURI().resolve(uri));
  *    var s = HttpServer.create(new InetSocketAddress(8080), 10, "/", finalHandler);
  *    s.start();
@@ -68,8 +67,8 @@ public interface HttpHandler {
 
     /**
      * Complements this handler with a fallback handler. Any request that
-     * matches the {@code requestTest} is handled by this handler. All other
-     * requests are handled by the fallback handler.
+     * matches the {@code requestTest} is handled by the fallback handler. All
+     * other requests are handled by this handler.
      *
      * @param requestTest     a predicate given the request
      * @param fallbackHandler another handler
@@ -77,8 +76,8 @@ public interface HttpHandler {
      * @throws NullPointerException if any argument is null
      * @since 17
      */
-    default HttpHandler handleIf(Predicate<Request> requestTest,
-                                 HttpHandler fallbackHandler) {
+    default HttpHandler handleOrElse(Predicate<Request> requestTest,
+                                     HttpHandler fallbackHandler) {
         Objects.requireNonNull(fallbackHandler);
         Objects.requireNonNull(requestTest);
         return exchange -> {
@@ -113,43 +112,6 @@ public interface HttpHandler {
                 public Headers getRequestHeaders() { return request.getRequestHeaders(); }
             };
             this.handle(newExchange);
-        };
-    }
-
-    /**
-     * Static alternative (tbd)
-     */
-    static HttpHandler handleIf(Predicate<Request> requestTest,
-                                HttpHandler conditionalHandler,
-                                 HttpHandler fallbackHandler) {
-        Objects.requireNonNull(fallbackHandler);
-        Objects.requireNonNull(requestTest);
-        return exchange -> {
-            if (requestTest.test(exchange))
-                conditionalHandler.handle(exchange);
-            else fallbackHandler.handle(exchange);
-        };
-    }
-
-    /**
-     * Static alternative (tbd)
-     */
-    static HttpHandler adaptRequest(UnaryOperator<Request> requestOperator,
-                                    HttpHandler handler) {
-        Objects.requireNonNull(requestOperator);
-        return exchange -> {
-            var request = requestOperator.apply(exchange);
-            var newExchange = new DelegatingHttpExchange(exchange) {
-                @Override
-                public URI getRequestURI() { return request.getRequestURI(); }
-
-                @Override
-                public String getRequestMethod() { return request.getRequestMethod(); }
-
-                @Override
-                public Headers getRequestHeaders() { return request.getRequestHeaders(); }
-            };
-            handler.handle(newExchange);
         };
     }
 }

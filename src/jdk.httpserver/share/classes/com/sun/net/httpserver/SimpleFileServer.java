@@ -68,7 +68,7 @@ import java.util.function.Predicate;
  * supports only HEAD and GET requests; to handle request methods other than
  * HEAD and GET, the handler can be complemented, either by adding additional
  * handlers to the server, or by composing a single handler via
- * {@link HttpHandler#handleIf(Predicate, HttpHandler)}.
+ * {@link HttpHandler#handleOrElse(Predicate, HttpHandler)}.
  * <p>Example of adding multiple handlers to a server:
  * <pre>    {@code class PutHandler implements HttpHandler {
  *        @Override
@@ -85,7 +85,7 @@ import java.util.function.Predicate;
  * <p>
  * Example of composing a single handler:
  * <pre>    {@code var handler = new PutHandler()
- *                         .handleIf(request -> request.getRequestMethod.equals("PUT"),
+ *                         .handleOrElse(request -> request.getRequestMethod.equals("PUT"),
  *                         SimpleFileServer.createFileHandler(Path.of("/some/path")));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();

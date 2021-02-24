@@ -93,12 +93,13 @@ public abstract class HttpsServer extends HttpServer {
     }
 
     /**
-     * Creates a {@code HttpsServer} instance which will bind to the specified
-     * {@link java.net.InetSocketAddress} (IP address and port number).
+     * Creates an {@code HttpsServer} instance with an {@code HttpContext}
+     * mapping of the supplied URI path {@code root} and {@code handler}, with
+     * any supplied {@code Filters} added to it.
      * <p>
-     * The server comes with a {@code HttpContext} mapping of the given URI path
-     * {@code root} and the given {@code HttpHandler}. Any given {@code Filters}
-     * are added to this context.
+     * The server instance will bind to the specified
+     * {@link java.net.InetSocketAddress}. The returned server is not started
+     * and can be configured further.
      * <p>
      * A maximum backlog can also be specified. This is the maximum number of
      * queued incoming connections to allow on the listening socket.
