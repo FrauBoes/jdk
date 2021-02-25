@@ -28,6 +28,7 @@ package com.sun.net.httpserver;
 import sun.net.httpserver.UnmodifiableHeaders;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -60,17 +61,19 @@ public interface Request {
     Headers getRequestHeaders();
 
     /**
-     * Returns a request that adds a header to this request.
-     * The passed name-value pair is added to the map of headers of this request.
-     * If a header with this name already exists, its value is replaced by the
-     * passed value. All other request state remains unchanged.
+     * Returns a {@code Request} that adds a header to this request.
+     * <p>
+     * The passed name-values mapping is added to the {@link Headers} of this
+     * request. If a header with this name already exists, its value is not
+     * replaced. All other request state remains unchanged.
+     * TODO: mention null? Or is link to Headers sufficient (its class-level doc mentions null)?
      *
-     * @param headerName  the new header name
-     * @param headerValue the new header value
+     * @param headerName   the header name
+     * @param headerValues the list of header values
      *
      * @return a request
      */
-    default Request with(String headerName, String headerValue) {
+    default Request with(String headerName, List<String> headerValues) {
         final Request r = this;
         return new Request() {
             @Override
@@ -81,8 +84,8 @@ public interface Request {
 
             @Override
             public Headers getRequestHeaders() {
-                ((UnmodifiableHeaders) r.getRequestHeaders())
-                        .map.add(headerName, headerValue);
+                ((UnmodifiableHeaders) r.getRequestHeaders()).map
+                        .putIfAbsent(headerName, headerValues);
                 return r.getRequestHeaders();
             }
         };

@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter;
  * <p>
  * If the outputLevel is DEFAULT, the format is based on the
  * <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format'>Common Logfile Format</a>.
- * In this case the output includes the following information:
+ * In this case the output includes the following information about an exchange:
  * <p>
  * remotehost rfc931 authuser [date] "request" status bytes
  * <p>
@@ -50,8 +50,8 @@ import java.time.format.DateTimeFormatter;
  * and are always represented as '-'.
  * <p>
  * If the outputLevel is VERBOSE, the output additionally includes the request
- * and response headers of the HttpExchange. Request headers are prepended
- * with '>', response headers with '<'.
+ * and response headers of the exchange, and the absolute path of the resource
+ * requested.
  */
 public final class OutputFilter extends Filter {
     private static final DateTimeFormatter formatter =
@@ -76,9 +76,10 @@ public final class OutputFilter extends Filter {
 				+ "- - "    // rfc931 and authuser
                 + "[" + OffsetDateTime.now().format(formatter) + "]\" "
 				+ t.getRequestMethod() + " " + t.getRequestURI() + "\" "
-				+ t.getResponseCode() + " " + "-";    // bytes
+				+ t.getResponseCode() + " -";    // bytes
         printStream.println(s);
         if (outputLevel.equals(OutputLevel.VERBOSE)) {
+            printStream.println("Resource requested: " + t.getAttribute("path"));
             logHeaders(">", t.getRequestHeaders());
             logHeaders("<", t.getResponseHeaders());
         }

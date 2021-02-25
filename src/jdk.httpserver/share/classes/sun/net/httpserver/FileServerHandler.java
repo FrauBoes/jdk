@@ -230,6 +230,7 @@ public final class FileServerHandler implements HttpHandler {
         try (exchange) {
             discardRequestBody(exchange);
             Path path = mapToPath(exchange, root);
+            exchange.setAttribute("path", path);  // store path for output filter
             if (testNotFound(exchange, path)) {
                 return;
             }

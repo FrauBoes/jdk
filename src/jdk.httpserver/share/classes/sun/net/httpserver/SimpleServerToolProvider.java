@@ -15,7 +15,7 @@ public class SimpleServerToolProvider implements ToolProvider {
     }
 
     public int run(PrintWriter out, PrintWriter err, String... args) {
-        SimpleFileServerImpl.mainForProvider(out, err, args);
+        SimpleFileServerImpl.mainForProvider(out, args);
         return 0;
     }
 }

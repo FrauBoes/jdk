@@ -129,7 +129,7 @@ public final class SimpleFileServer {
          * Used to specify output in the default format.
          * <p>
          * The default format is based on the <a href='https://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format'>Common Logfile Format</a>.
-         * and includes the following information:
+         * and includes the following information about an {@code HttpExchange}:
          * <p>
          * {@code remotehost rfc931 authuser [date] "request" status bytes}
          * <p>
@@ -147,7 +147,8 @@ public final class SimpleFileServer {
          * <p>
          * Additional to the information provided by the
          * {@linkplain OutputLevel#DEFAULT default} format, the verbose format
-         * includes the request and response headers of the {@code HttpExchange}.
+         * includes the request and response headers of the {@code HttpExchange}
+         * and the absolute path of the resource requested.
          */
         VERBOSE
     }
