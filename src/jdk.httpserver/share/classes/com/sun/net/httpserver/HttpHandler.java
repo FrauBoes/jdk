@@ -37,21 +37,37 @@ import java.util.function.UnaryOperator;
  * A handler which is invoked to process HTTP exchanges. Each
  * HTTP exchange is handled by one of these handlers.
  *
- * @apiNote The methods {@link #handleOrElse(Predicate, HttpHandler)} and
+ * @apiNote
+ * The methods {@link #handleOrElse(Predicate, HttpHandler)} and
  * {@link #adaptRequest(UnaryOperator)} are conveniences to complement and adapt
  * a given handler, in order to extend or modify its functionality.
  * <p>
  * Example of a complemented and adapted {@code HttpHandler}:
- * <pre>    {@code var uri = URI.create("https://someuri");
- *    var handler = new SomePutHandler();
- *    var fallbackHandler = new SomeOtherHandler();
- *    var finalHandler = handler.handleOrElse(r -> r.getRequestMethod().equals("PUT"), fallbackHandler)
- *                              .adaptRequest(r -> r.with(r.getRequestURI().resolve(uri));
- *    var s = HttpServer.create(new InetSocketAddress(8080), 10, "/", finalHandler);
- *    s.start();
+ * <pre>    {@code var handler = new SomeHandler().handleOrElse(r -> r.getRequestMethod().equals("PUT"), new SomePutHandler())
+ *                                   .adaptRequest(r -> r.with("Foo", List.of("Bar")));
+ *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/", handler);
+ *    server.start();
  * }</pre>
+ * The above handler adds a custom request header "Foo" to all incoming requests
+ * before they are handled. It then delegates the handling of the exchange to
+ * the {@code SomePutHandler} instance if the request method is {@code PUT},
+ * otherwise it delegates the exchange to the {@code SomeHandler} instance.
+ * <p>
+ * Example of a nested complemented {@code HttpHandler}:
+ * <pre>    {@code var handler = new SomeHandler().handleOrElse(r -> r.getRequestMethod().equals("GET"), new SomeGetHandler())
+ *                                   .handleOrElse(r -> r.getRequestHeaders().containsKey("Want-Digest")
+ *                                                   && r.getRequestMethod().equals("GET"), new SomeDigestHandler());
+ * }</pre>
+ * In the case of nested complemented handlers, delegation of the exchange
+ * starts at the last method call. The handler delegates the exchange to the
+ * {@code SomeDigestHandler} instance if the request header "Want-Digest" is
+ * present and the request method is {@code GET}. Otherwise, delegation moves to
+ * the second last method call, where the exchange is delegated to the
+ * {@code SomeGetHandler} instance if the request method is {@code GET}. All
+ * remaining exchanges that don't match either of the request tests are handled
+ * by the initial {@code SomeHandler} instance.
  *
- * @since 1.6
+ *  @since 1.6
  */
 public interface HttpHandler {
     /**
@@ -71,6 +87,11 @@ public interface HttpHandler {
      * matches the {@code requestTest} is handled by the fallback handler. All
      * other requests are handled by this handler.
      *
+     * @implNote
+     * This implementation delegates the handling of the exchange either to this
+     * handler or the fallback handler, depending on the result of the predicate.
+     * An implementation of this method does not need to be provided.
+     *
      * @param requestTest     a predicate given the request
      * @param fallbackHandler another handler
      * @return a handler
@@ -85,8 +106,8 @@ public interface HttpHandler {
         Objects.requireNonNull(requestTest);
         return exchange -> {
             if (requestTest.test(exchange))
-                handle(exchange);
-            else fallbackHandler.handle(exchange);
+                fallbackHandler.handle(exchange);
+            else handle(exchange);
         };
     }
 
@@ -94,6 +115,10 @@ public interface HttpHandler {
      * Allows this handler to inspect and adapt the request state, before
      * handling the exchange. The {@code Request} returned by the operator
      * will be the effective request state of the exchange when handled.
+     *
+     * @implNote
+     * This implementation passes the exchange to this handler after adapting it.
+     * An implementation of this method does not need to be provided.
      *
      * @param requestOperator the request operator
      * @return a handler

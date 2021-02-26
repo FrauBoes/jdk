@@ -75,6 +75,8 @@ public interface Request {
      */
     default Request with(String headerName, List<String> headerValues) {
         final Request r = this;
+        ((UnmodifiableHeaders) r.getRequestHeaders()).map
+                .putIfAbsent(headerName, headerValues);
         return new Request() {
             @Override
             public URI getRequestURI() { return r.getRequestURI(); }
@@ -83,11 +85,7 @@ public interface Request {
             public String getRequestMethod() { return r.getRequestMethod(); }
 
             @Override
-            public Headers getRequestHeaders() {
-                ((UnmodifiableHeaders) r.getRequestHeaders()).map
-                        .putIfAbsent(headerName, headerValues);
-                return r.getRequestHeaders();
-            }
+            public Headers getRequestHeaders() { return r.getRequestHeaders(); }
         };
     }
 }

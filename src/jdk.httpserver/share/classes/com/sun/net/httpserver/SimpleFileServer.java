@@ -84,8 +84,7 @@ import java.util.function.Predicate;
  *    }</pre>
  * <p>
  * Example of composing a single handler:
- * <pre>    {@code var handler = new PutHandler()
- *                         .handleOrElse(request -> request.getRequestMethod.equals("PUT"),
+ * <pre>    {@code var handler = new PutHandler().handleOrElse(request -> request.getRequestMethod().equals("PUT"),
  *                         SimpleFileServer.createFileHandler(Path.of("/some/path")));
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();
@@ -202,7 +201,8 @@ public final class SimpleFileServer {
      * The handler supports only HEAD and GET requests and can serve directory
      * listings and files. Content types are supported on a best-guess basis.
      *
-     * @implNote The content type of a file is guessed by calling
+     * @implNote
+     * The content type of a file is guessed by calling
      * {@link java.net.FileNameMap#getContentTypeFor(String)} on the
      * {@link URLConnection#getFileNameMap() mimeTable} found.
      *
@@ -226,9 +226,10 @@ public final class SimpleFileServer {
      * <p>
      * The output format is specified by the {@link OutputLevel outputLevel}.
      *
-     * @implNote An {@link IllegalArgumentException} is thrown if
-     * {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is recommended
-     * to not use a filter in this case.
+     * @implNote
+     * An {@link IllegalArgumentException} is thrown if
+     * {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is recommended to
+     * not use a filter in this case.
      *
      * @param out         the OutputStream to print to
      * @param outputLevel the output about an http exchange
