@@ -136,8 +136,8 @@ final class SimpleFileServerImpl {
      * Starts a simple HTTP file server created on a directory, after setting an
      * output writer.
      *
-     * @param outWriter    a writer to which output should be written
-     * @param args         the command line options
+     * @param outWriter a writer to which output should be written
+     * @param args      the command line options
      * @throws NullPointerException if any of the arguments is null
      */
     public static void mainForProvider(PrintWriter outWriter, String[] args) {

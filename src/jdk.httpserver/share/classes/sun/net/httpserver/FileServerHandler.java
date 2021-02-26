@@ -63,7 +63,8 @@ public final class FileServerHandler implements HttpHandler {
         this.mimeTable = mimeTable;
     }
 
-    public static HttpHandler create(Path root, Function<String, String> mimeTable) {
+    public static HttpHandler create(Path root, Function<String, String> mimeTable)
+            throws IOException {
         return new FileServerHandler(root, mimeTable)
                 .handleOrElse(r -> SUPPORTED_METHODS.contains(r.getRequestMethod()),
                         FileServerHandler::handleNotAllowed);
@@ -180,12 +181,12 @@ public final class FileServerHandler implements HttpHandler {
         }
     }
 
-    String openHTML = """
+    private final String openHTML = """
                 <!DOCTYPE html>
                 <html>
                 <body>""";
 
-    String closeHTML = """
+    private final String closeHTML = """
                 </ul><p><hr>
                 </body>
                 </html>""";

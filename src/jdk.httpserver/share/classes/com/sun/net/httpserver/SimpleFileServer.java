@@ -37,8 +37,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A simple HTTP file server and its components, for educational and development
- * purposes only.
+ * A simple HTTP file server and its components (intended for testing,
+ * development and debugging purposes only).
  * <p>
  * The simple file server is composed of: <ul>
  * <li>an {@link HttpServer HttpServer} that is bound to a given address,</li>
@@ -105,7 +105,7 @@ import java.util.function.Predicate;
  * main entry point of the {@code jdk.httpserver} module, which can be used on
  * the command line as such:
  * <p>
- * <pre>    {@code java -m jdk.httpserver [-b bind address] [-p port] [-d directory] [-o none|default|verbose]}</pre>
+ * <pre>    {@code java -m jdk.httpserver [-b bind address] [-d directory] [-h to show help message] [-o none|default|verbose] [-p port]}</pre>
  *
  * @since 17
  */
@@ -174,12 +174,13 @@ public final class SimpleFileServer {
      * @param root        the root directory to be served, must be an absolute path
      * @param outputLevel the output about an http exchange
      * @return an HttpServer
-     * @throws UncheckedIOException
-     * @throws NullPointerException if any of the object arguments is null
+     * @throws UncheckedIOException if an I/O error occurs
+     * @throws NullPointerException if any argument is null
      */
     public static HttpServer createFileServer(InetSocketAddress addr,
                                               Path root,
                                               OutputLevel outputLevel) {
+        Objects.requireNonNull(addr);
         Objects.requireNonNull(root);
         Objects.requireNonNull(outputLevel);
         try {
@@ -201,16 +202,22 @@ public final class SimpleFileServer {
      * The handler supports only HEAD and GET requests and can serve directory
      * listings and files. Content types are supported on a best-guess basis.
      *
-     * @param root the root directory to be served, must be an absolute path
-     * @return an HttpHandler
      * @implNote The content type of a file is guessed by calling
      * {@link java.net.FileNameMap#getContentTypeFor(String)} on the
      * {@link URLConnection#getFileNameMap() mimeTable} found.
+     *
+     * @param root the root directory to be served, must be an absolute path
+     * @return an HttpHandler
+     * @throws UncheckedIOException if an I/O error occurs
      * @throws NullPointerException if the argument is null
      */
     public static HttpHandler createFileHandler(Path root) {
         Objects.requireNonNull(root);
-        return FileServerHandler.create(root, MIME_TABLE);
+        try {
+            return FileServerHandler.create(root, MIME_TABLE);
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
+        }
     }
 
     /**
@@ -219,13 +226,15 @@ public final class SimpleFileServer {
      * <p>
      * The output format is specified by the {@link OutputLevel outputLevel}.
      *
-     * @param out         the OutputStream to print to
-     * @param outputLevel the output about an http exchange
-     * @return a Filter
      * @implNote An {@link IllegalArgumentException} is thrown if
      * {@link OutputLevel#NONE OutputLevel.NONE} is passed. It is recommended
      * to not use a filter in this case.
-     * @throws NullPointerException if any argument is null
+     *
+     * @param out         the OutputStream to print to
+     * @param outputLevel the output about an http exchange
+     * @return a Filter
+     * @throws IllegalArgumentException if an invalid outputLevel is passed
+     * @throws NullPointerException     if any argument is null
      */
     public static Filter createOutputFilter(OutputStream out,
                                             OutputLevel outputLevel) {

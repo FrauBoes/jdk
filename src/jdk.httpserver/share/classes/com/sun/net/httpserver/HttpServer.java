@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 
 /**
@@ -174,15 +175,19 @@ public abstract class HttpServer {
      * @param handler the HttpHandler for the context
      * @param filters the Filters for the context, optional
      * @return the HttpServer
-     * @throws BindException if the server cannot bind to the requested address,
-     *                       or if the server is already bound
-     * @throws IOException
+     * @throws BindException            if the server cannot bind to the address
+     * @throws IOException              if an I/O error occurs
+     * @throws IllegalArgumentException if path is invalid
+     * @throws NullPointerException     if root, handler or filters is {@code null}
      */
     public static HttpServer create(InetSocketAddress addr,
                                     int backlog,
                                     String root,
                                     HttpHandler handler,
                                     Filter... filters) throws IOException {
+        Objects.requireNonNull(root);
+        Objects.requireNonNull(handler);
+        Objects.requireNonNull(filters);
         HttpServer server = HttpServer.create(addr, backlog);
         HttpContext context = server.createContext(root);
         context.setHandler(handler);

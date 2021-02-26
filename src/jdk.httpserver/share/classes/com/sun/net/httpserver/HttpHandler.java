@@ -61,6 +61,7 @@ public interface HttpHandler {
      *
      * @param exchange the exchange containing the request from the
      *                 client and used to send the response
+     * @throws IOException if an I/O error occurs
      * @throws NullPointerException if exchange is {@code null}
      */
     public abstract void handle (HttpExchange exchange) throws IOException;
@@ -73,11 +74,13 @@ public interface HttpHandler {
      * @param requestTest     a predicate given the request
      * @param fallbackHandler another handler
      * @return a handler
+     * @throws IOException          if an I/O error occurs
      * @throws NullPointerException if any argument is null
      * @since 17
      */
     default HttpHandler handleOrElse(Predicate<Request> requestTest,
-                                     HttpHandler fallbackHandler) {
+                                     HttpHandler fallbackHandler)
+            throws IOException {
         Objects.requireNonNull(fallbackHandler);
         Objects.requireNonNull(requestTest);
         return exchange -> {
