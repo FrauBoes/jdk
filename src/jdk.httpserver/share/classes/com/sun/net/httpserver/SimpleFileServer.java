@@ -84,8 +84,8 @@ import java.util.function.Predicate;
  *    }</pre>
  * <p>
  * Example of composing a single handler:
- * <pre>    {@code var handler = new PutHandler().handleOrElse(request -> request.getRequestMethod().equals("PUT"),
- *                         SimpleFileServer.createFileHandler(Path.of("/some/path")));
+ * <pre>    {@code var handler = SimpleFileServer.createFileHandler(Path.of("/some/path"))
+ *                         .handleOrElse(request -> request.getRequestMethod().equals("PUT"), new PutHandler());
  *    var server = HttpServer.create(new InetSocketAddress(8080), 10, "/some/context/", handler);
  *    server.start();
  *    }</pre>
