@@ -146,9 +146,7 @@ public final class FileServerHandler implements HttpHandler {
         String contextPath = exchange.getHttpContext().getPath();
         if (!contextPath.endsWith("/")) contextPath += "/";
         String file = URI.create(contextPath).relativize(uri).getPath();
-        System.out.println("JUBO" + file);
-        System.out.println(file.replaceAll("\\.+/", ""));  // don't allow directory traversal
-        if (file.isEmpty()) file = "./"; // TODO: is this right?
+        file = file.replaceAll("\\.+/", "");  // prevent directory traversal
         return root.resolve(file);
     }
 
@@ -212,6 +210,7 @@ public final class FileServerHandler implements HttpHandler {
     String mediaType(String file) {
         String type = mimeTable.apply(file);
         return type != null ? type : "application/octet-stream";
+        // default for unknown content types, as per rfc2046
     }
 
     static final BiFunction<String, HashMap<Integer, String>, String> sanitize =
