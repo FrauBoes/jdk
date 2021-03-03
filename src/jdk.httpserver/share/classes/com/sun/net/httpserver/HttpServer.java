@@ -188,6 +188,8 @@ public abstract class HttpServer {
         Objects.requireNonNull(root);
         Objects.requireNonNull(handler);
         Objects.requireNonNull(filters);
+        Arrays.stream(filters).forEach(Objects::requireNonNull);
+
         HttpServer server = HttpServer.create(addr, backlog);
         HttpContext context = server.createContext(root);
         context.setHandler(handler);

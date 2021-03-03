@@ -145,9 +145,11 @@ public final class FileServerHandler implements HttpHandler {
         URI uri = exchange.getRequestURI();
         String contextPath = exchange.getHttpContext().getPath();
         if (!contextPath.endsWith("/")) contextPath += "/";
-        String file = URI.create(contextPath).relativize(uri).getPath();
-        file = file.replaceAll("\\.+/", "");  // prevent directory traversal
-        return root.resolve(file);
+        String requestPath = URI.create(contextPath).relativize(uri).getPath();
+        Path validatedPath = root.resolve(requestPath).normalize();
+        if (!validatedPath.startsWith(root) || isHiddenOrSymLink(validatedPath))
+            return root;
+        return validatedPath;
     }
 
     Path indexFile(Path path) {
@@ -181,12 +183,12 @@ public final class FileServerHandler implements HttpHandler {
         }
     }
 
-    private final String openHTML = """
+    private static final String openHTML = """
                 <!DOCTYPE html>
                 <html>
                 <body>""";
 
-    private final String closeHTML = """
+    private static final String closeHTML = """
                 </ul><p><hr>
                 </body>
                 </html>""";
@@ -199,7 +201,7 @@ public final class FileServerHandler implements HttpHandler {
                         + "\">" + sanitize.apply(uri, chars) + "</a></li>"));
     }
 
-    boolean isHiddenOrSymLink(Path path) {
+    static boolean isHiddenOrSymLink(Path path) {
         try {
             return Files.isHidden(path) || Files.isSymbolicLink(path);
         } catch (IOException e) {

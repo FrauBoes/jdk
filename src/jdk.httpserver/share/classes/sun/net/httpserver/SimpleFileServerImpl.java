@@ -111,7 +111,7 @@ final class SimpleFileServerImpl {
                     case "-d" -> root = Path.of(options.next());
                     case "-o" -> outputLevel = Enum.valueOf(OutputLevel.class,
                             options.next().toUpperCase(Locale.ROOT));
-                    default -> throw new AssertionError();
+                    default -> throw new AssertionError();  // usage error, can print back
                 }
             }
         } catch (Exception | AssertionError e) {

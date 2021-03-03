@@ -70,7 +70,6 @@ public interface Request {
      *
      * @param headerName   the header name
      * @param headerValues the list of header values
-     *
      * @return a request
      */
     default Request with(String headerName, List<String> headerValues) {
